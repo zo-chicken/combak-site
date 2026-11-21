@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Combak · démo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  /* Monde visuel unique Combak : crème chaleureux, encre nuit, corail signature. Layout : dashboard à gauche, téléphone client en direct à droite. */
+  --cream:#FFF6EC; --paper:#FFFFFF; --sand:#F3E7D8; --line:#E8DCCD;
+  --ink:#1B1440; --ink-2:#4A4366; --ink-3:#6B6488;
+  --coral:#FF5A3C; --coral-deep:#C2391C; --butter:#FFC94A;
+  --good:#127A57; --good-bg:#DDF3EA; --warn:#8A5A00; --warn-bg:#FFF0C7; --info-bg:#ECE8FB;
+  --display:"Bricolage Grotesque", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --body:"Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r-lg:24px; --r-md:16px; --r-sm:10px;
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--cream);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--display);letter-spacing:-0.02em;line-height:1.1;margin:0;text-wrap:balance}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--coral);outline-offset:2px;border-radius:8px}
+.num{font-variant-numeric:tabular-nums}
+
+/* Barre du haut */
+.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;padding:12px 20px;background:rgba(255,246,236,0.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brand{display:inline-flex;align-items:baseline;font-family:var(--display);font-weight:800;font-size:28px;letter-spacing:-0.045em;line-height:1;color:var(--ink)}
+.brand svg{width:.56em;height:.56em;margin:0 .02em}
+.demo-pill{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--ink);color:var(--cream);padding:4px 10px;border-radius:999px}
+.spacer{flex:1}
+.seg{display:inline-flex;background:var(--sand);border-radius:999px;padding:4px;gap:4px}
+.seg button{border:0;background:transparent;padding:8px 14px;border-radius:999px;font-weight:600;font-size:14px;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--cream)}
+.ghost{border:1px solid var(--line);background:var(--paper);padding:8px 14px;border-radius:999px;font-weight:600;font-size:14px}
+.ghost:hover{border-color:var(--ink-3)}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:220px minmax(0,1fr) 430px;min-height:calc(100% - 65px)}
+.sidenav{border-right:1px solid var(--line);padding:20px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:65px;align-self:start;height:calc(100vh - 65px)}
+.sidenav .shop{display:flex;gap:10px;align-items:center;padding:6px 10px 18px}
+.avatar{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:18px;flex:none}
+.nav-btn{display:flex;align-items:center;gap:12px;border:0;background:transparent;padding:10px 12px;border-radius:12px;font-weight:600;color:var(--ink-2);text-align:left;width:100%}
+.nav-btn svg{width:20px;height:20px;flex:none}
+.nav-btn:hover{background:var(--sand);color:var(--ink)}
+.nav-btn[aria-current="page"]{background:var(--ink);color:var(--cream)}
+.main{padding:28px 32px 60px;min-width:0;display:flex;flex-direction:column;gap:24px}
+.phone-col{border-left:1px solid var(--line);background:var(--sand);padding:24px 20px;display:flex;flex-direction:column;align-items:center;gap:12px;position:sticky;top:65px;align-self:start;height:calc(100vh - 65px);overflow:auto}
+.phone-col .hint{font-size:13px;color:var(--ink-2);text-align:center;max-width:340px}
+
+@media (max-width:1180px){
+  .layout{grid-template-columns:minmax(0,1fr)}
+  .sidenav{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);flex-direction:row;overflow-x:auto;padding:10px 16px;gap:6px}
+  .sidenav .shop{display:none}
+  .nav-btn{width:auto;white-space:nowrap;padding:8px 12px}
+  .phone-col{position:static;height:auto;border-left:0;background:var(--cream)}
+  body[data-view="commercant"] .phone-col{display:none}
+  body[data-view="client"] .sidenav, body[data-view="client"] .main{display:none}
+  .main{padding:20px 16px 48px}
+}
+@media (min-width:1181px){ .view-toggle{display:none} }
+
+/* Éléments communs */
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.page-head h1{font-size:34px}
+.page-head p{margin:6px 0 0;color:var(--ink-2);max-width:60ch}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px}
+.panel h2{font-size:20px;margin-bottom:14px}
+.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.grid-kpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+@media (max-width:900px){.grid-2{grid-template-columns:minmax(0,1fr)}.grid-kpi{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.kpi .v{font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:-0.03em;line-height:1}
+.kpi .l{font-size:13px;color:var(--ink-2);font-weight:500}
+.btn{border:0;border-radius:999px;padding:11px 18px;font-weight:700;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px}
+.btn-primary{background:var(--coral);color:var(--ink)}
+.btn-primary:hover{background:#FF6F55}
+.btn-dark{background:var(--ink);color:var(--cream)}
+.btn-dark:hover{background:#2A2160}
+.btn-soft{background:var(--sand);color:var(--ink)}
+.btn-soft:hover{background:#EBDCC8}
+.btn-sm{padding:7px 12px;min-height:36px;font-size:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.chip.good{background:var(--good-bg);color:var(--good)}
+.chip.warn{background:var(--warn-bg);color:var(--warn)}
+.chip.info{background:var(--info-bg);color:var(--ink)}
+.chip.coral{background:#FFE1D9;color:var(--coral-deep)}
+.muted{color:var(--ink-2)}
+.small{font-size:13px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-weight:600;font-size:14px}
+.input,select.input,textarea.input{border:1.5px solid var(--line);background:var(--paper);border-radius:12px;padding:10px 12px;min-height:44px;width:100%}
+.input:focus{outline:none;border-color:var(--ink)}
+textarea.input{min-height:96px;resize:vertical}
+.note{display:flex;gap:12px;align-items:flex-start;background:var(--info-bg);border-radius:var(--r-md);padding:14px 16px;font-size:14px}
+.note svg{flex:none;width:20px;height:20px;margin-top:1px}
+.note.good{background:var(--good-bg)}
+.list{display:flex;flex-direction:column}
+.row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row .grow{flex:1;min-width:0}
+.bar{height:8px;border-radius:999px;background:var(--sand);overflow:hidden}
+.bar span{display:block;height:100%;background:var(--coral);border-radius:999px}
+.table-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:620px}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);text-align:left;font-weight:700;padding:10px 12px;border-bottom:1px solid var(--line)}
+td{padding:12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.toggle{position:relative;width:48px;height:28px;flex:none}
+.toggle input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.toggle span{position:absolute;inset:0;background:#D9CCBC;border-radius:999px;transition:background .2s}
+.toggle span::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .2s}
+.toggle input:checked + span{background:var(--good)}
+.toggle input:checked + span::after{transform:translateX(20px)}
+.toggle input:focus-visible + span{outline:3px solid var(--coral);outline-offset:2px}
+.swatches{display:flex;gap:10px;flex-wrap:wrap}
+.swatch{position:relative;width:44px;height:44px}
+.swatch input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.swatch span{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(27,20,64,.15)}
+.swatch input:checked + span{box-shadow:0 0 0 3px var(--cream),0 0 0 6px var(--ink)}
+.swatch input:focus-visible + span{outline:3px solid var(--coral);outline-offset:6px}
+
+/* Graphique */
+.chart svg{width:100%;height:auto;display:block}
+
+/* Scanner */
+.viewfinder{position:relative;height:220px;border-radius:var(--r-lg);background:#120D2E;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#CFC8EA;font-size:14px}
+.viewfinder .frame{position:absolute;width:150px;height:150px}
+.viewfinder .frame i{position:absolute;width:34px;height:34px;border:4px solid var(--coral)}
+.viewfinder .frame i:nth-child(1){top:0;left:0;border-right:0;border-bottom:0;border-radius:10px 0 0 0}
+.viewfinder .frame i:nth-child(2){top:0;right:0;border-left:0;border-bottom:0;border-radius:0 10px 0 0}
+.viewfinder .frame i:nth-child(3){bottom:0;left:0;border-right:0;border-top:0;border-radius:0 0 0 10px}
+.viewfinder .frame i:nth-child(4){bottom:0;right:0;border-left:0;border-top:0;border-radius:0 0 10px 0}
+.viewfinder .line{position:absolute;left:calc(50% - 70px);width:140px;height:2px;background:var(--coral);box-shadow:0 0 12px var(--coral);animation:scan 2.2s ease-in-out infinite}
+.viewfinder .label{position:absolute;bottom:14px}
+@keyframes scan{0%,100%{top:calc(50% - 66px)}50%{top:calc(50% + 66px)}}
+
+/* Carte 3D */
+.tilt-stage{perspective:1100px;touch-action:none;display:flex;align-items:center;justify-content:center;padding:18px 0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.card-float{transform-style:preserve-3d}
+.tilt-stage:not(.active) .card-float{animation:float 7s ease-in-out infinite}
+@keyframes float{0%,100%{transform:rotateX(8deg) rotateY(-12deg) translateY(0)}50%{transform:rotateX(-3deg) rotateY(12deg) translateY(-8px)}}
+.card3d{--cw:340px;position:relative;width:var(--cw);height:calc(var(--cw) / 1.586);font-size:calc(var(--cw) / 23);transform-style:preserve-3d;transform:rotateX(var(--rx,0deg)) rotateY(calc(var(--ry,0deg) + var(--flip,0deg)));transition:transform .8s cubic-bezier(.2,.8,.2,1)}
+.tilt-stage.active .card3d{transition:transform 90ms linear}
+.card3d .edge{position:absolute;inset:0;border-radius:1.25em}
+.card3d .face{position:absolute;inset:0;border-radius:1.25em;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:0 1.6em 2.8em rgba(10,6,30,.38)}
+.card3d .front{transform:translateZ(3px)}
+.card3d .back{transform:rotateY(180deg) translateZ(3px)}
+.card3d .inner{position:relative;height:100%;padding:1.1em 1.25em;display:flex;flex-direction:column;justify-content:space-between}
+.card3d .ring{position:absolute;right:-3.2em;bottom:-4em;width:12em;height:12em;border-radius:50%;border:1.3em solid currentColor;opacity:.12}
+.card3d .shop-name{font-family:var(--display);font-weight:800;font-size:1.15em;letter-spacing:-0.02em;line-height:1}
+.card3d .kind{font-size:.62em;font-weight:600;opacity:.85;margin-top:.3em}
+.card3d .count{font-family:var(--display);font-weight:800;font-size:2.8em;letter-spacing:-0.04em;line-height:.9}
+.card3d .count small{font-family:var(--body);font-size:.27em;font-weight:600;letter-spacing:0;margin-left:.3em}
+.card3d .stamps{display:flex;flex-wrap:wrap;gap:.32em}
+.card3d .st{width:1.35em;height:1.35em;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none}
+.card3d .st svg{width:.8em;height:.8em}
+.card3d .reward{font-size:.68em;font-weight:600}
+.card3d .sheen{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at var(--mx,50%) var(--my,30%),rgba(255,255,255,var(--sh,.22)),rgba(255,255,255,0) 55%)}
+.card3d .glare{position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,0) 35%,rgba(255,255,255,.2) 48%,rgba(255,255,255,0) 60%);background-size:260% 100%;background-position:var(--gx,50%) 0}
+.card3d .mark{display:inline-flex;align-items:baseline;font-family:var(--display);font-weight:800;font-size:1em;letter-spacing:-0.045em;line-height:1}
+.card3d .mark svg{width:.56em;height:.56em;margin:0 .02em}
+.card3d .back .inner{flex-direction:row;align-items:center;gap:1em;justify-content:flex-start}
+.card3d .qr{background:#fff;border-radius:.6em;padding:.45em;flex:none}
+.card3d .qr svg{width:6.2em;height:6.2em;display:block}
+.card3d .who{font-family:var(--display);font-weight:800;font-size:1.15em;line-height:1.05}
+.card3d .back p{margin:.35em 0 0;font-size:.62em;line-height:1.35}
+
+/* Téléphone */
+.phone{position:relative;width:min(390px,100%);height:780px;border-radius:46px;border:10px solid var(--ink);background:var(--cream);overflow:hidden;box-shadow:0 30px 60px rgba(27,20,64,.25);display:flex;flex-direction:column}
+@media (max-width:1180px){.phone{height:auto;min-height:640px}}
+.phone-screen{flex:1;overflow-y:auto;padding:22px 18px 28px;display:flex;flex-direction:column;gap:16px}
+.phone h2{font-size:24px}
+.banner{position:absolute;left:10px;right:10px;top:10px;z-index:5;background:rgba(255,255,255,.96);border-radius:20px;padding:12px 14px;box-shadow:0 12px 30px rgba(27,20,64,.25);display:flex;gap:10px;align-items:flex-start;transform:translateY(-140%);transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+.banner.show{transform:translateY(0)}
+.app-ico{width:36px;height:36px;border-radius:10px;background:var(--ink);display:flex;align-items:center;justify-content:center;flex:none}
+.app-ico svg{width:22px;height:22px}
+.banner b{display:block;font-size:13px}
+.banner p{margin:2px 0 0;font-size:13px;line-height:1.35}
+.wallet-btn{width:100%;min-height:50px;border-radius:14px;border:0;background:#000;color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:10px}
+.wallet-btn svg{width:22px;height:22px}
+.msg{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:12px 14px;font-size:14px}
+.msg .t{font-size:12px;color:var(--ink-3);font-weight:600}
+.prize{background:var(--butter);border-radius:16px;padding:12px 14px;font-weight:600;font-size:14px;display:flex;gap:10px;align-items:center}
+
+/* Roue */
+.wheel-wrap{position:relative;width:100%;max-width:280px;margin:0 auto;aspect-ratio:1}
+.wheel-wrap canvas{width:100%;height:100%;display:block}
+.wheel-pin{position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:24px solid var(--ink);filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+.modal{position:absolute;inset:0;z-index:8;background:rgba(27,20,64,.55);display:flex;align-items:flex-end}
+.sheet{background:var(--cream);width:100%;border-radius:28px 28px 0 0;padding:22px 18px 26px;display:flex;flex-direction:column;gap:14px;max-height:92%;overflow:auto}
+.seg-row{display:grid;grid-template-columns:22px minmax(0,1fr) 92px 44px;gap:10px;align-items:center}
+.dot{width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(27,20,64,.2)}
+.icon-btn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--paper);display:flex;align-items:center;justify-content:center}
+.icon-btn svg{width:18px;height:18px}
+
+/* Toast */
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,160%);z-index:50;background:var(--ink);color:var(--cream);padding:12px 18px;border-radius:999px;font-weight:600;font-size:14px;box-shadow:0 12px 30px rgba(27,20,64,.3);transition:transform .35s cubic-bezier(.2,.8,.2,1);max-width:calc(100% - 32px);text-align:center}
+.toast.show{transform:translate(-50%,0)}
+
+@media (prefers-reduced-motion:reduce){
+  .tilt-stage:not(.active) .card-float,.viewfinder .line{animation:none}
+  .card3d,.banner,.toast{transition:none}
+}
+</style>
+</head>
+<body data-view="commercant">
+
+<header class="topbar">
+  <span class="brand" role="img" aria-label="Combak">c<svg aria-hidden="true" viewBox="0 0 100 100"><path d="M80 50 A30 30 0 1 1 65 24" fill="none" stroke="#FF5A3C" stroke-width="16" stroke-linecap="round"/><path d="M62 9 L73 28 L52 31" fill="none" stroke="#FF5A3C" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/></svg>mbak</span>
+  <span class="demo-pill">Démo</span>
+  <span class="spacer"></span>
+  <div class="seg view-toggle" role="group" aria-label="Choisir la vue">
+    <button type="button" id="v-commercant" aria-pressed="true">Commerçant</button>
+    <button type="button" id="v-client" aria-pressed="false">Client</button>
+  </div>
+  <button type="button" class="ghost" id="reset">Réinitialiser la démo</button>
+</header>
+
+<div class="layout">
+  <nav class="sidenav" aria-label="Menu du commerçant" id="nav"></nav>
+  <main class="main" id="main"></main>
+  <aside class="phone-col" aria-label="Téléphone du client, en direct">
+    <div class="phone" id="phone">
+      <div class="banner" id="banner" role="status" aria-live="polite"></div>
+      <div class="phone-screen" id="phone-screen"></div>
+      <div id="phone-modal"></div>
+    </div>
+    <p class="hint">Le téléphone de ta cliente, en direct. Ce que tu fais dans le dashboard arrive ici.</p>
+  </aside>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- Données de démo ---------- */
+var COLORS = [
+  {id:"corail", name:"Corail", bg:"#FF5A3C", fg:"#1B1440", edge:"#C93E22", fill:"#1B1440", mark:"#FF5A3C", empty:"rgba(27,20,64,.45)", back:"#1B1440", backFg:"#FFF6EC"},
+  {id:"nuit", name:"Nuit", bg:"#2A2160", fg:"#FFF6EC", edge:"#120D2E", fill:"#FF5A3C", mark:"#1B1440", empty:"rgba(255,246,236,.5)", back:"#FF5A3C", backFg:"#1B1440"},
+  {id:"beurre", name:"Beurre", bg:"#FFC94A", fg:"#1B1440", edge:"#D49A22", fill:"#1B1440", mark:"#FFC94A", empty:"rgba(27,20,64,.45)", back:"#1B1440", backFg:"#FFF6EC"},
+  {id:"menthe", name:"Menthe", bg:"#3CCB98", fg:"#1B1440", edge:"#1F9A6F", fill:"#1B1440", mark:"#3CCB98", empty:"rgba(27,20,64,.45)", back:"#1B1440", backFg:"#FFF6EC"},
+  {id:"creme", name:"Crème", bg:"#FFF6EC", fg:"#1B1440", edge:"#E2D2BE", fill:"#FF5A3C", mark:"#FFF6EC", empty:"rgba(27,20,64,.4)", back:"#1B1440", backFg:"#FFF6EC"}
+];
+
+function demoCustomers(){
+  var raw = [
+    ["Camille R.",8,24,2,true],["Hugo B.",3,7,5,true],["Inès M.",9,31,1,true],["Lucas D.",1,2,41,true],
+    ["Chloé P.",6,14,9,true],["Nathan G.",0,3,58,false],["Manon L.",5,18,3,true],["Yanis K.",2,5,36,true],
+    ["Sarah T.",7,22,6,true],["Théo V.",4,9,12,true],["Jade F.",0,1,73,true],["Adam S.",8,12,4,true]
+  ];
+  return raw.map(function(r,i){return {id:"c"+i,name:r[0],stamps:r[1],visits:r[2],lastDays:r[3],consent:r[4],ready:false};});
+}
+
+function initialState(){
+  return {
+    view:"commercant", tab:"accueil",
+    shop:{name:"Café Lumière", reward:"Un café offert", goal:10, color:"corail"},
+    customers: demoCustomers(),
+    me:null, join:{name:"", contact:"", consent:false, error:""}, joinStep:"form",
+    wheel:{trigger:"inscription", segments:[
+      {label:"Un café offert", w:10},{label:"-10 % sur l'addition", w:25},{label:"Un tampon bonus", w:30},
+      {label:"Un cookie offert", w:15},{label:"Retente demain", w:20}
+    ]},
+    meCanSpin:false, meSpun:false, spinResult:null, wheelAction:false,
+    scenarios:{welcome:true, near:true, miss:true, birthday:true, review:true},
+    phoneNotifs:[], sent:[], activity:[
+      {t:"Il y a 12 min", txt:"Inès M. a reçu un tampon (9/10)"},
+      {t:"Il y a 40 min", txt:"Camille R. a reçu un tampon (8/10)"},
+      {t:"Ce matin", txt:"Relance automatique « Tu nous manques » envoyée à 3 clients"}
+    ],
+    visitsBase:186, rewardsBase:23, weeks:[34,41,38,47,52,49,58,61], reviewsAsked:0,
+    scanFilter:"", clientFilter:""
+  };
+}
+var S = initialState();
+
+/* ---------- Utilitaires ---------- */
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];});}
+function $(id){return document.getElementById(id);}
+function color(){for(var i=0;i<COLORS.length;i++){if(COLORS[i].id===S.shop.color)return COLORS[i];}return COLORS[0];}
+function allCustomers(){return S.me ? [S.me].concat(S.customers) : S.customers;}
+function status(c){
+  if(c.lastDays>30) return {txt:"À relancer", cls:"warn"};
+  if(c.visits>=15) return {txt:"Fidèle", cls:"good"};
+  return {txt:"Régulier", cls:"info"};
+}
+function lastTxt(d){return d===0?"Aujourd'hui":(d===1?"Hier":"Il y a "+d+" j");}
+var toastTimer;
+function toast(msg){var t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.classList.remove("show");},2600);}
+
+var ICON = {
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/></svg>',
+  card:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18"/></svg>',
+  scan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M4 12h16"/></svg>',
+  users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c2 .7 3.2 2.5 3.6 5.2"/></svg>',
+  bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>',
+  wheel:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></svg>',
+  info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>',
+  shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8 8 9 4.6-1 8-4.5 8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
+  gift:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h16v10H4zM12 10v10M3 7h18v3H3zM12 7C10 3 6 4 8 7M12 7c2-4 6-3 4 0"/></svg>',
+  wallet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M7 6V4h10v2"/></svg>'
+};
+var BOOM = function(c){return '<svg aria-hidden="true" viewBox="0 0 100 100"><path d="M80 50 A30 30 0 1 1 65 24" fill="none" stroke="'+c+'" stroke-width="16" stroke-linecap="round"/><path d="M62 9 L73 28 L52 31" fill="none" stroke="'+c+'" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/></svg>';};
+
+/* QR décoratif (démo) */
+function qrSVG(seed){
+  var n=21, out="", s=seed||7;
+  function rnd(){s=(s*1103515245+12345)%2147483648;return s/2147483648;}
+  for(var r=0;r<n;r++){for(var c=0;c<n;c++){
+    var on, tl=r<7&&c<7, tr=r<7&&c>13, bl=r>13&&c<7;
+    if(tl||tr||bl){var rr=bl?r-14:r, cc=tr?c-14:c; on=rr===0||rr===6||cc===0||cc===6||(rr>=2&&rr<=4&&cc>=2&&cc<=4);}
+    else if((r===7&&(c<8||c>12))||(c===7&&(r<8||r>12))||(r===13&&c<8)||(c===13&&r<8)) on=false;
+    else on=rnd()>0.52;
+    if(on) out+='<rect x="'+c+'" y="'+r+'" width="1.02" height="1.02"/>';
+  }}
+  return '<svg viewBox="0 0 21 21" fill="#1B1440" aria-hidden="true">'+out+'</svg>';
+}
+
+/* ---------- Carte 3D ---------- */
+function cardHTML(opt){
+  var col=color(), sh=S.shop, stamps=opt.stamps, goal=sh.goal, st="";
+  for(var i=0;i<goal;i++){
+    if(i<stamps) st+='<span class="st" style="background:'+col.fill+'"><svg viewBox="0 0 24 24"><path d="M6 12.5 10 16.5 18 8" fill="none" stroke="'+col.mark+'" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+    else if(i===goal-1) st+='<span class="st" style="border:2px solid '+col.fg+'"><svg viewBox="0 0 24 24" fill="none" stroke="'+col.fg+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h16v10H4zM12 10v10M3 7h18v3H3zM12 7C10 3 6 4 8 7M12 7c2-4 6-3 4 0"/></svg></span>';
+    else st+='<span class="st" style="border:2px dashed '+col.empty+'"></span>';
+  }
+  var left=Math.max(0,goal-stamps);
+  var line = stamps>=goal ? "Récompense prête : "+esc(sh.reward) : "Encore "+left+" passage"+(left>1?"s":"")+" : "+esc(sh.reward).toLowerCase();
+  var edges=""; for(var z=-2;z<=2;z++) edges+='<div class="edge" style="background:'+col.edge+';transform:translateZ('+z+'px)"></div>';
+  var label = opt.label ? '<span class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">'+esc(opt.label)+'</span>' : "";
+  return '<div class="tilt-stage" role="button" tabindex="0" aria-label="Carte de fidélité '+esc(sh.name)+', '+stamps+' tampons sur '+goal+'. Touche pour la retourner.">'+label+
+    '<div class="card-float"><div class="card3d" style="--cw:'+(opt.w||340)+'px">'+edges+
+    '<div class="face front" style="background:'+col.bg+';color:'+col.fg+(col.id==="creme"?";border:1px solid #E2D2BE":"")+'"><div class="ring"></div><div class="inner">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div><div class="shop-name">'+esc(sh.name)+'</div><div class="kind">Carte fidélité</div></div><span class="mark">c'+BOOM(col.fill)+'mbak</span></div>'+
+      '<div class="count num">'+stamps+'<small>/ '+goal+' tampons</small></div>'+
+      '<div class="stamps">'+st+'</div>'+
+      '<div class="reward">'+line+'</div>'+
+    '</div><div class="sheen"></div><div class="glare"></div></div>'+
+    '<div class="face back" style="background:'+col.back+';color:'+col.backFg+'"><div class="inner"><div class="qr">'+qrSVG(opt.seed||7)+'</div><div><div class="who">'+esc(opt.who||"Ton nom")+'</div><p>Montre ce QR en caisse pour gagner ton tampon.</p><p style="opacity:.75">QR de démonstration</p></div></div></div>'+
+    '</div></div></div>';
+}
+function bindTilt(root){
+  root.querySelectorAll(".tilt-stage").forEach(function(st){
+    var card=st.querySelector(".card3d"), flipped=false;
+    st.addEventListener("pointermove",function(e){
+      var r=st.getBoundingClientRect(), px=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)), py=Math.min(1,Math.max(0,(e.clientY-r.top)/r.height));
+      st.classList.add("active");
+      card.style.setProperty("--ry",((px-.5)*38).toFixed(1)+"deg");
+      card.style.setProperty("--rx",(-(py-.5)*28).toFixed(1)+"deg");
+      card.style.setProperty("--mx",(px*100).toFixed(0)+"%");
+      card.style.setProperty("--my",(py*100).toFixed(0)+"%");
+      card.style.setProperty("--gx",(100-px*100).toFixed(0)+"%");
+      card.style.setProperty("--sh",".5");
+    });
+    st.addEventListener("pointerleave",function(){
+      st.classList.remove("active");
+      ["--rx","--ry","--mx","--my","--gx","--sh"].forEach(function(p){card.style.removeProperty(p);});
+    });
+    function flip(){flipped=!flipped;card.style.setProperty("--flip",flipped?"180deg":"0deg");}
+    st.addEventListener("click",flip);
+    st.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();flip();}});
+  });
+}
+
+/* ---------- Roue ---------- */
+var WHEEL_COLORS=[["#FF5A3C","#1B1440"],["#FFC94A","#1B1440"],["#1B1440","#FFF6EC"],["#FFF6EC","#1B1440"]];
+function drawWheel(canvas, segs, rot){
+  var dpr=window.devicePixelRatio||1, size=canvas.clientWidth||260;
+  canvas.width=size*dpr; canvas.height=size*dpr;
+  var ctx=canvas.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0);
+  var cx=size/2, cy=size/2, R=size/2-4, n=segs.length, a=2*Math.PI/n;
+  ctx.clearRect(0,0,size,size);
+  ctx.beginPath();ctx.arc(cx,cy,R+2,0,2*Math.PI);ctx.fillStyle="#1B1440";ctx.fill();
+  for(var i=0;i<n;i++){
+    var c=WHEEL_COLORS[i%4]; if(n%4===1&&i===n-1&&i%4===0) c=WHEEL_COLORS[1];
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,R-2,rot+i*a,rot+(i+1)*a);ctx.closePath();ctx.fillStyle=c[0];ctx.fill();
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(rot+(i+.5)*a);ctx.textAlign="right";ctx.textBaseline="middle";
+    ctx.fillStyle=c[1];ctx.font="700 "+Math.max(10,Math.round(size/22))+"px Inter, sans-serif";
+    var label=segs[i].label||"…"; if(label.length>18) label=label.slice(0,17)+"…";
+    ctx.fillText(label,R-14,0);ctx.restore();
+  }
+  ctx.beginPath();ctx.arc(cx,cy,R*0.16,0,2*Math.PI);ctx.fillStyle="#FFF6EC";ctx.fill();
+  ctx.lineWidth=4;ctx.strokeStyle="#1B1440";ctx.stroke();
+}
+function pickSegment(segs){
+  var total=segs.reduce(function(s,x){return s+Math.max(0,Number(x.w)||0);},0)||1, r=Math.random()*total;
+  for(var i=0;i<segs.length;i++){r-=Math.max(0,Number(segs[i].w)||0); if(r<=0) return i;}
+  return segs.length-1;
+}
+function spin(canvas, segs, rotRef, done){
+  var n=segs.length, a=2*Math.PI/n, idx=pickSegment(segs);
+  var target=-Math.PI/2-(idx+.5)*a, start=rotRef.v;
+  var delta=((target-start)%(2*Math.PI)+2*Math.PI)%(2*Math.PI);
+  var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var end=start+delta+(reduce?0:5*2*Math.PI), dur=reduce?500:4200, t0=null;
+  function step(ts){
+    if(!t0)t0=ts; var p=Math.min(1,(ts-t0)/dur), e=1-Math.pow(1-p,3);
+    rotRef.v=start+(end-start)*e; drawWheel(canvas,segs,rotRef.v);
+    if(p<1) requestAnimationFrame(step); else done(idx);
+  }
+  requestAnimationFrame(step);
+}
+
+/* ---------- Actions ---------- */
+function pushPhone(title, body){
+  if(!S.me || !S.me.consent) return false;
+  var n={title:title, body:body, t:"À l'instant"};
+  S.phoneNotifs.unshift(n);
+  renderPhone();
+  var b=$("banner");
+  b.innerHTML='<span class="app-ico">'+BOOM("#FF5A3C")+'</span><div><b>'+esc(S.shop.name)+' · '+esc(title)+'</b><p>'+esc(body)+'</p></div>';
+  b.classList.add("show"); clearTimeout(pushPhone.t); pushPhone.t=setTimeout(function(){b.classList.remove("show");},4200);
+  return true;
+}
+function addActivity(txt){S.activity.unshift({t:"À l'instant",txt:txt}); if(S.activity.length>8) S.activity.pop();}
+function addStamp(c){
+  if(c.ready) return;
+  c.stamps++; c.visits++; c.lastDays=0; S.visitsBase++; S.weeks[S.weeks.length-1]++;
+  var g=S.shop.goal, left=g-c.stamps;
+  if(c.stamps>=g){c.stamps=g;c.ready=true;}
+  addActivity(c.name+" a reçu un tampon ("+c.stamps+"/"+g+")");
+  toast("Tampon ajouté pour "+c.name+" · "+c.stamps+"/"+g);
+  if(c===S.me){
+    if(c.ready) pushPhone("Récompense prête","Bravo "+c.name+" ! "+S.shop.reward+" t'attend. Montre ta carte en caisse.");
+    else if(S.scenarios.near && left===2) pushPhone("Presque !","Plus que 2 passages et "+S.shop.reward.toLowerCase()+" est pour toi.");
+    else pushPhone("Tampon ajouté","Merci "+c.name+" ! Tu en es à "+c.stamps+"/"+g+".");
+    if(S.scenarios.review && c.visits===1){
+      S.reviewsAsked++;
+      setTimeout(function(){pushPhone("Ton avis compte","Ça t'a plu ? Un avis Google nous aide beaucoup. C'est sans obligation et sans contrepartie.");},4800);
+    }
+  }
+  renderAll();
+}
+function redeem(c){
+  c.ready=false; c.stamps=0; S.rewardsBase++;
+  addActivity(c.name+" a utilisé sa récompense : "+S.shop.reward);
+  toast("Récompense validée pour "+c.name);
+  if(c===S.me) pushPhone("Récompense utilisée","Bon appétit ! Ta carte repart à zéro, à très vite.");
+  renderAll();
+}
+
+/* ---------- Rendu commerçant ---------- */
+var TABS=[["accueil","Accueil",ICON.home],["carte","Ma carte",ICON.card],["scanner","Scanner",ICON.scan],["clients","Clients",ICON.users],["notifs","Notifications",ICON.bell],["roue","Roue",ICON.wheel]];
+function renderNav(){
+  var col=color();
+  var h='<div class="shop"><span class="avatar" style="background:'+col.bg+';color:'+col.fg+(col.id==="creme"?";border:1px solid #E2D2BE":"")+'">'+esc(S.shop.name.charAt(0)||"C")+'</span><div><b style="display:block;line-height:1.2">'+esc(S.shop.name)+'</b><span class="small muted">Formule Pro · démo</span></div></div>';
+  TABS.forEach(function(t){h+='<button type="button" class="nav-btn" data-tab="'+t[0]+'"'+(S.tab===t[0]?' aria-current="page"':'')+'>'+t[2]+'<span>'+t[1]+'</span></button>';});
+  $("nav").innerHTML=h;
+}
+function kpis(){
+  var all=allCustomers(), relance=all.filter(function(c){return c.lastDays>30;}).length;
+  return '<div class="grid-kpi">'+
+    '<div class="kpi"><span class="v num">'+all.length+'</span><span class="l">Clients inscrits</span></div>'+
+    '<div class="kpi"><span class="v num">'+S.visitsBase+'</span><span class="l">Passages ce mois-ci</span></div>'+
+    '<div class="kpi"><span class="v num">'+S.rewardsBase+'</span><span class="l">Récompenses offertes</span></div>'+
+    '<div class="kpi"><span class="v num">'+relance+'</span><span class="l">Clients à relancer</span></div></div>';
+}
+function chart(){
+  var w=560,h=200,pl=34,pb=26,max=80,n=S.weeks.length,bw=(w-pl-10)/n;
+  var s='<svg viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Passages par semaine sur 8 semaines, de '+S.weeks[0]+' à '+S.weeks[n-1]+'">';
+  [0,20,40,60,80].forEach(function(v){var y=h-pb-(v/max)*(h-pb-12);s+='<line x1="'+pl+'" x2="'+w+'" y1="'+y+'" y2="'+y+'" stroke="#E8DCCD"/><text x="'+(pl-8)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="#6B6488" font-family="Inter">'+v+'</text>';});
+  S.weeks.forEach(function(v,i){
+    var bh=(v/max)*(h-pb-12), x=pl+6+i*bw, y=h-pb-bh, last=i===n-1;
+    s+='<rect x="'+x+'" y="'+y+'" width="'+(bw-12)+'" height="'+bh+'" rx="6" fill="'+(last?"#FF5A3C":"#1B1440")+'" opacity="'+(last?1:.82)+'"/>';
+    s+='<text x="'+(x+(bw-12)/2)+'" y="'+(h-8)+'" text-anchor="middle" font-size="11" fill="#6B6488" font-family="Inter">S'+(i+1)+'</text>';
+    if(last) s+='<text x="'+(x+(bw-12)/2)+'" y="'+(y-6)+'" text-anchor="middle" font-size="12" font-weight="700" fill="#1B1440" font-family="Inter">'+v+'</text>';
+  });
+  return s+'</svg>';
+}
+function viewAccueil(){
+  var acts=S.activity.map(function(a){return '<div class="row"><div class="grow">'+esc(a.txt)+'</div><span class="small muted" style="white-space:nowrap">'+esc(a.t)+'</span></div>';}).join("");
+  return '<div class="page-head"><div><h1>Bonjour '+esc(S.shop.name)+'</h1><p>Voici comment tes clients reviennent. Données de démonstration.</p></div><button type="button" class="btn btn-primary" data-go="scanner">'+ICON.scan.replace('<svg','<svg style="width:18px;height:18px"')+'Scanner un client</button></div>'+
+    kpis()+
+    '<div class="grid-2"><section class="panel chart"><h2>Passages par semaine</h2>'+chart()+'<p class="small muted" style="margin:8px 0 0">La barre corail, c\'est la semaine en cours. Elle monte à chaque scan.</p></section>'+
+    '<section class="panel"><h2>Activité récente</h2><div class="list">'+acts+'</div></section></div>';
+}
+function viewCarte(){
+  var sw=COLORS.map(function(c){return '<label class="swatch" title="'+c.name+'"><input type="radio" name="shop-color" value="'+c.id+'"'+(S.shop.color===c.id?" checked":"")+' aria-label="'+c.name+'"><span style="background:'+c.bg+'"></span></label>';}).join("");
+  return '<div class="page-head"><div><h1>Ma carte</h1><p>Personnalise ta carte. Les cartes déjà dans le Wallet de tes clients se mettent à jour, sans rien réimprimer.</p></div></div>'+
+  '<div class="grid-2"><section class="panel" style="display:flex;flex-direction:column;gap:16px">'+
+    '<div class="field"><label for="shop-name">Nom du commerce</label><input class="input" id="shop-name" maxlength="28" value="'+esc(S.shop.name)+'"></div>'+
+    '<div class="field"><label for="shop-reward">Récompense</label><input class="input" id="shop-reward" maxlength="34" value="'+esc(S.shop.reward)+'"></div>'+
+    '<div class="field"><label for="shop-goal">Nombre de tampons : <span id="goal-out" class="num">'+S.shop.goal+'</span></label><input type="range" id="shop-goal" min="5" max="12" value="'+S.shop.goal+'" style="accent-color:#1B1440;min-height:32px"></div>'+
+    '<fieldset style="border:0;padding:0;margin:0" class="field"><legend style="font-weight:600;font-size:14px;margin-bottom:8px">Couleur de la carte</legend><div class="swatches">'+sw+'</div></fieldset>'+
+  '</section><section class="panel" style="display:flex;flex-direction:column;align-items:center;justify-content:center;background:#221A4F;border-color:#221A4F"><div id="card-preview" style="width:100%"></div><p class="small" style="color:#D8D2EE;margin:0;text-align:center">Glisse dessus pour la faire pivoter, touche pour la retourner.</p></section></div>';
+}
+function scanRows(){
+  var f=S.scanFilter.trim().toLowerCase();
+  return allCustomers().filter(function(c){return !f||c.name.toLowerCase().indexOf(f)>-1;}).map(function(c){
+    var g=S.shop.goal, me=c===S.me;
+    var act=c.ready?'<button type="button" class="btn btn-dark btn-sm" data-redeem="'+c.id+'">'+ICON.gift.replace('<svg','<svg style="width:16px;height:16px"')+'Valider la récompense</button>':'<button type="button" class="btn btn-primary btn-sm" data-stamp="'+c.id+'">+1 tampon</button>';
+    return '<div class="row"><div class="grow"><b>'+esc(c.name)+'</b>'+(me?' <span class="chip coral">Ta cliente en direct</span>':'')+'<div class="bar" style="margin-top:6px;max-width:240px"><span style="width:'+Math.round(c.stamps/g*100)+'%"></span></div></div><span class="num small muted" style="white-space:nowrap">'+c.stamps+'/'+g+'</span>'+act+'</div>';
+  }).join("")||'<p class="muted">Aucun client ne correspond.</p>';
+}
+function viewScanner(){
+  return '<div class="page-head"><div><h1>Scanner</h1><p>En caisse, scanne le QR de la carte avec ton téléphone ou ta tablette. Dans la démo, choisis le client dans la liste.</p></div></div>'+
+  '<div class="grid-2"><div class="viewfinder" aria-hidden="true"><div class="frame"><i></i><i></i><i></i><i></i></div><div class="line"></div><span class="label">Caméra simulée</span></div>'+
+  '<section class="panel">'+(S.me?'':'<div class="note" style="margin-bottom:12px">'+ICON.info+'<span>Inscris-toi dans la vue client (le téléphone) pour voir ta carte se remplir en direct quand tu scannes.</span></div>')+
+  '<div class="field" style="margin-bottom:6px"><label for="scan-search">Chercher un client</label><input class="input" id="scan-search" placeholder="Prénom…" value="'+esc(S.scanFilter)+'"></div><div class="list" id="scan-list">'+scanRows()+'</div></section></div>';
+}
+function clientRows(){
+  var f=S.clientFilter.trim().toLowerCase(), g=S.shop.goal;
+  return allCustomers().filter(function(c){return !f||c.name.toLowerCase().indexOf(f)>-1;}).map(function(c){
+    var st=status(c);
+    return '<tr><td><b>'+esc(c.name)+'</b></td><td><div style="display:flex;align-items:center;gap:10px"><div class="bar" style="width:90px"><span style="width:'+Math.round(c.stamps/g*100)+'%"></span></div><span class="num small">'+c.stamps+'/'+g+'</span></div></td><td class="num">'+c.visits+'</td><td>'+lastTxt(c.lastDays)+'</td><td><span class="chip '+st.cls+'">'+st.txt+'</span>'+(c.ready?' <span class="chip coral">Récompense prête</span>':'')+'</td><td>'+(c.consent?'Oui':'<span class="muted">Non</span>')+'</td></tr>';
+  }).join("");
+}
+function viewClients(){
+  return '<div class="page-head"><div><h1>Clients</h1><p>Tout ton fichier client, construit tout seul à chaque inscription. Hébergé en Europe.</p></div></div>'+
+  '<section class="panel"><div class="field" style="max-width:320px;margin-bottom:12px"><label for="client-search">Chercher</label><input class="input" id="client-search" placeholder="Prénom…" value="'+esc(S.clientFilter)+'"></div>'+
+  '<div class="table-wrap"><table><thead><tr><th scope="col">Client</th><th scope="col">Tampons</th><th scope="col">Passages</th><th scope="col">Dernière visite</th><th scope="col">Statut</th><th scope="col">Notifs</th></tr></thead><tbody id="client-body">'+clientRows()+'</tbody></table></div></section>';
+}
+var SCEN=[
+  ["welcome","Bienvenue","Juste après l'inscription."],
+  ["near","Récompense proche","Quand il ne reste que 2 passages."],
+  ["miss","Tu nous manques","Après 30 jours sans visite."],
+  ["birthday","Anniversaire","Le jour J, avec une petite attention."],
+  ["review","Demande d'avis Google","Après la 1re visite, sans contrepartie."]
+];
+function viewNotifs(){
+  var sc=SCEN.map(function(s){return '<div class="row"><div class="grow"><b>'+s[1]+'</b><div class="small muted">'+s[2]+'</div></div><label class="toggle"><input type="checkbox" data-scen="'+s[0]+'"'+(S.scenarios[s[0]]?" checked":"")+' aria-label="'+s[1]+'"><span></span></label></div>';}).join("");
+  var hist=S.sent.length?S.sent.map(function(x){return '<div class="row"><div class="grow">'+esc(x.msg)+'</div><span class="chip info">'+x.n+' client'+(x.n>1?'s':'')+'</span></div>';}).join(""):'<p class="muted small" style="margin:0">Aucune campagne envoyée pendant cette démo.</p>';
+  return '<div class="page-head"><div><h1>Notifications</h1><p>Elles s\'affichent sur l\'écran de verrouillage de tes clients, depuis leur carte Wallet. Illimitées.</p></div></div>'+
+  '<div class="grid-2"><section class="panel" style="display:flex;flex-direction:column;gap:14px"><h2 style="margin:0">Envoyer un message</h2>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-soft btn-sm" data-tpl="Ce week-end, ton 2e café est offert. On t\'attend !">Offre week-end</button><button type="button" class="btn btn-soft btn-sm" data-tpl="Nouveau : nos brioches maison sont arrivées. Viens goûter !">Nouveauté</button><button type="button" class="btn btn-soft btn-sm" data-tpl="Il pleut ? Un chocolat chaud t\'attend au chaud chez nous.">Météo</button></div>'+
+    '<div class="field"><label for="notif-msg">Message</label><textarea class="input" id="notif-msg" maxlength="140">Ce week-end, ton 2e café est offert. On t\'attend !</textarea></div>'+
+    '<div class="field"><label for="notif-target">Destinataires</label><select class="input" id="notif-target"><option value="all">Tous les clients</option><option value="near">Proches d\'une récompense</option><option value="miss">À relancer (plus de 30 jours)</option></select></div>'+
+    '<button type="button" class="btn btn-primary" id="notif-send">'+ICON.bell.replace('<svg','<svg style="width:18px;height:18px"')+'Envoyer maintenant</button>'+
+    '<div><h2 style="font-size:16px;margin:8px 0 4px">Historique</h2><div class="list">'+hist+'</div></div>'+
+  '</section><section class="panel"><h2>Relances automatiques</h2><p class="small muted" style="margin:-6px 0 6px">Elles tournent toutes seules, tu n\'as rien à faire.</p><div class="list">'+sc+'</div></section></div>';
+}
+function viewRoue(){
+  var total=S.wheel.segments.reduce(function(s,x){return s+Math.max(0,Number(x.w)||0);},0)||1;
+  var rows=S.wheel.segments.map(function(s,i){var c=WHEEL_COLORS[i%4][0];return '<div class="seg-row"><span class="dot" style="background:'+c+'"></span><label class="sr" for="seg-l-'+i+'" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Lot '+(i+1)+'</label><input class="input" id="seg-l-'+i+'" data-seg-l="'+i+'" maxlength="24" value="'+esc(s.label)+'"><div style="display:flex;align-items:center;gap:4px"><label for="seg-w-'+i+'" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Poids du lot '+(i+1)+'</label><input class="input num" id="seg-w-'+i+'" data-seg-w="'+i+'" type="number" min="0" max="100" value="'+s.w+'" style="padding:10px 8px"><span class="small muted num" id="seg-p-'+i+'" style="min-width:34px">'+Math.round(Math.max(0,Number(s.w)||0)/total*100)+'%</span></div><button type="button" class="icon-btn" data-seg-del="'+i+'" aria-label="Supprimer le lot '+(i+1)+'"'+(S.wheel.segments.length<=2?' disabled':'')+'>'+ICON.trash+'</button></div>';}).join("");
+  var trig=[["inscription","À l'inscription","Un tour offert pour bienvenue."],["instagram","Suivre sur Instagram","Le client suit ton compte, puis tourne."],["parrainage","Parrainer un ami","Un tour quand un ami s'inscrit."]].map(function(t){return '<label class="row" style="cursor:pointer"><input type="radio" name="wheel-trigger" value="'+t[0]+'"'+(S.wheel.trigger===t[0]?" checked":"")+' style="width:20px;height:20px;accent-color:#1B1440"><div class="grow"><b>'+t[1]+'</b><div class="small muted">'+t[2]+'</div></div></label>';}).join("");
+  return '<div class="page-head"><div><h1>La roue</h1><p>Un jeu qui fait revenir, 100 % conforme. Tu choisis les lots et leurs chances.</p></div></div>'+
+  '<div class="note good">'+ICON.shield+'<span><b>Conforme Google et loi française.</b> La roue ne s\'obtient jamais en échange d\'un avis. La demande d\'avis arrive après, sans condition et sans contrepartie.</span></div>'+
+  '<div class="grid-2"><section class="panel" style="display:flex;flex-direction:column;gap:12px"><h2 style="margin:0">Lots</h2><div style="display:flex;flex-direction:column;gap:10px">'+rows+'</div>'+
+    '<button type="button" class="btn btn-soft btn-sm" id="seg-add"'+(S.wheel.segments.length>=8?' disabled':'')+' style="align-self:flex-start">Ajouter un lot</button>'+
+    '<h2 style="margin:10px 0 0">Comment on gagne un tour</h2><div class="list">'+trig+'</div></section>'+
+  '<section class="panel" style="display:flex;flex-direction:column;align-items:center;gap:14px"><h2 style="align-self:flex-start;margin:0">Aperçu</h2><div class="wheel-wrap"><canvas id="wheel-prev" aria-label="Aperçu de la roue avec '+S.wheel.segments.length+' lots"></canvas><span class="wheel-pin" aria-hidden="true"></span></div><button type="button" class="btn btn-dark" id="wheel-test">Tester la roue</button><p class="small muted" id="wheel-test-out" role="status" style="margin:0;min-height:1.5em"></p></section></div>';
+}
+var prevRot={v:0};
+function renderMain(){
+  var v={accueil:viewAccueil,carte:viewCarte,scanner:viewScanner,clients:viewClients,notifs:viewNotifs,roue:viewRoue}[S.tab]();
+  $("main").innerHTML=v;
+  if(S.tab==="carte") renderCardPreview();
+  if(S.tab==="roue"){var c=$("wheel-prev"); drawWheel(c,S.wheel.segments,prevRot.v);}
+}
+function renderCardPreview(){
+  var box=$("card-preview"); if(!box) return;
+  var w=Math.min(360,Math.max(240,box.clientWidth-20));
+  box.innerHTML=cardHTML({stamps:Math.min(S.shop.goal-3,7),w:w,who:"Exemple client"});
+  bindTilt(box);
+}
+
+/* ---------- Rendu client (téléphone) ---------- */
+function phoneHeader(){
+  var col=color();
+  return '<div style="display:flex;align-items:center;gap:10px"><span class="avatar" style="background:'+col.bg+';color:'+col.fg+(col.id==="creme"?";border:1px solid #E2D2BE":"")+'">'+esc(S.shop.name.charAt(0)||"C")+'</span><div><b style="display:block;line-height:1.2">'+esc(S.shop.name)+'</b><span class="small muted">Programme fidélité</span></div></div>';
+}
+function renderPhone(){
+  var sc=$("phone-screen"), h="";
+  if(!S.me){
+    h=phoneHeader()+
+      '<h2>Rejoins le programme fidélité</h2><p class="muted" style="margin:-6px 0 0">'+S.shop.goal+' tampons = '+esc(S.shop.reward.toLowerCase())+'. Sans appli : ta carte s\'ajoute à ton Wallet.</p>'+
+      '<form id="join-form" novalidate style="display:flex;flex-direction:column;gap:12px">'+
+      '<div class="field"><label for="join-name">Prénom</label><input class="input" id="join-name" autocomplete="given-name" value="'+esc(S.join.name)+'" placeholder="Léa"></div>'+
+      '<div class="field"><label for="join-contact">Téléphone ou e-mail</label><input class="input" id="join-contact" autocomplete="email" value="'+esc(S.join.contact)+'" placeholder="lea@exemple.fr"></div>'+
+      '<label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.4;cursor:pointer"><input type="checkbox" id="join-consent"'+(S.join.consent?" checked":"")+' style="width:20px;height:20px;margin-top:1px;accent-color:#1B1440;flex:none"><span>J\'accepte de recevoir les offres de '+esc(S.shop.name)+' sur ma carte. Désinscription en un geste.</span></label>'+
+      (S.join.error?'<p role="alert" style="margin:0;color:#B3261E;font-weight:600;font-size:14px">'+esc(S.join.error)+'</p>':'')+
+      '<button type="submit" class="btn btn-primary" style="width:100%">Créer ma carte</button></form>'+
+      '<p class="small muted" style="margin:0;text-align:center">Tu arrives ici en scannant le QR posé sur le comptoir.</p>';
+  } else if(S.joinStep==="add"){
+    h=phoneHeader()+'<h2>Ta carte est prête, '+esc(S.me.name)+'</h2>'+cardHTML({stamps:S.me.stamps,w:300,who:S.me.name,seed:11})+
+      '<button type="button" class="wallet-btn" data-wallet="apple">'+ICON.wallet+'Ajouter à Apple Wallet</button><button type="button" class="wallet-btn" data-wallet="google">'+ICON.wallet+'Ajouter à Google Wallet</button><p class="small muted" style="margin:0;text-align:center">Boutons de démonstration.</p>';
+  } else {
+    var me=S.me, msgs=S.phoneNotifs.map(function(n){return '<div class="msg"><div class="t">'+esc(n.title)+' · '+esc(n.t)+'</div>'+esc(n.body)+'</div>';}).join("");
+    var spinBox="";
+    if(!S.meSpun){
+      if(S.wheel.trigger==="inscription") spinBox='<button type="button" class="prize" data-open-wheel style="border:0;width:100%;text-align:left">'+ICON.gift.replace('<svg','<svg style="width:22px;height:22px;flex:none"')+'<span>Un tour de roue offert pour ton inscription. Touche pour jouer !</span></button>';
+      else if(S.wheel.trigger==="instagram") spinBox='<div class="prize" style="flex-direction:column;align-items:stretch"><span>Suis @'+esc(S.shop.name.toLowerCase().replace(/[^a-z0-9]/g,""))+' sur Instagram et gagne un tour de roue.</span><button type="button" class="btn btn-dark btn-sm" data-open-wheel>C\'est fait, je joue (démo)</button></div>';
+      else spinBox='<div class="prize" style="flex-direction:column;align-items:stretch"><span>Invite un ami : dès qu\'il s\'inscrit, tu gagnes un tour de roue.</span><button type="button" class="btn btn-dark btn-sm" data-open-wheel>Mon ami s\'est inscrit (démo)</button></div>';
+    } else if(S.spinResult){
+      spinBox='<div class="prize">'+ICON.gift.replace('<svg','<svg style="width:22px;height:22px;flex:none"')+'<span>Gagné à la roue : '+esc(S.spinResult)+'. Montre ta carte en caisse.</span></div>';
+    }
+    h='<div style="display:flex;justify-content:space-between;align-items:center"><h2>Wallet</h2><span class="small muted">'+esc(me.name)+'</span></div>'+
+      cardHTML({stamps:me.stamps,w:300,who:me.name,seed:11})+spinBox+
+      (S.tab!=="scanner"?'<button type="button" class="btn btn-soft btn-sm" data-go="scanner" style="align-self:center">Ouvrir le scanner du commerçant</button>':'')+
+      '<h3 style="font-size:16px;margin-top:4px">Messages de '+esc(S.shop.name)+'</h3>'+(msgs||'<p class="small muted" style="margin:0">'+(me.consent?'Les notifications de ta carte apparaîtront ici.':'Tu as refusé les notifications : rien ne s\'affichera ici.')+'</p>');
+  }
+  sc.innerHTML=h;
+  bindTilt(sc);
+}
+function openWheel(){
+  var m=$("phone-modal");
+  m.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="wheel-title"><div class="sheet"><h2 id="wheel-title">Tourne la roue</h2><div class="wheel-wrap"><canvas id="wheel-phone" aria-label="Roue des cadeaux"></canvas><span class="wheel-pin" aria-hidden="true"></span></div><p id="wheel-out" role="status" style="margin:0;text-align:center;font-weight:700;min-height:1.5em"></p><button type="button" class="btn btn-primary" id="wheel-go" style="width:100%">Lancer</button><button type="button" class="btn btn-soft" id="wheel-close" style="width:100%">Fermer</button></div></div>';
+  var c=$("wheel-phone"), rot={v:0}; drawWheel(c,S.wheel.segments,0);
+  $("wheel-go").addEventListener("click",function(){
+    var b=this; b.disabled=true;
+    spin(c,S.wheel.segments,rot,function(i){
+      var lot=S.wheel.segments[i].label; S.meSpun=true;
+      var lose=/retente|perdu/i.test(lot); S.spinResult=lose?null:lot;
+      $("wheel-out").textContent=lose?"Pas cette fois. Retente à ta prochaine visite !":"Bravo ! Tu gagnes : "+lot;
+      addActivity(S.me.name+(lose?" a tourné la roue (pas de lot)":" a gagné à la roue : "+lot));
+      b.textContent="Super"; b.disabled=false; b.onclick=closeWheel;
+      renderNav(); if(S.tab==="accueil") renderMain();
+    });
+  });
+  $("wheel-close").addEventListener("click",closeWheel);
+  $("wheel-go").focus();
+}
+function closeWheel(){$("phone-modal").innerHTML=""; renderPhone();}
+
+function renderAll(){renderNav(); renderMain(); renderPhone();}
+
+/* ---------- Événements ---------- */
+function setView(v){
+  S.view=v; document.body.setAttribute("data-view",v);
+  $("v-commercant").setAttribute("aria-pressed",String(v==="commercant"));
+  $("v-client").setAttribute("aria-pressed",String(v==="client"));
+  if(location.hash!=="#"+v){try{history.replaceState(null,"","#"+v);}catch(e){}}
+  if(v==="commercant") renderMain();
+}
+$("v-commercant").addEventListener("click",function(){setView("commercant");});
+$("v-client").addEventListener("click",function(){setView("client");});
+$("reset").addEventListener("click",function(){var v=S.view;S=initialState();S.view=v;$("phone-modal").innerHTML="";renderAll();toast("Démo réinitialisée");});
+
+document.addEventListener("click",function(e){
+  var t=e.target.closest("[data-tab],[data-go],[data-stamp],[data-redeem],[data-tpl],[data-wallet],[data-open-wheel],[data-seg-del],#notif-send,#seg-add,#wheel-test");
+  if(!t) return;
+  if(t.dataset.tab){S.tab=t.dataset.tab;renderNav();renderMain();window.scrollTo(0,0);return;}
+  if(t.dataset.go){S.tab=t.dataset.go;setView("commercant");renderNav();renderMain();renderPhone();window.scrollTo(0,0);return;}
+  if(t.dataset.stamp){var c=allCustomers().filter(function(x){return x.id===t.dataset.stamp;})[0]; if(c) addStamp(c); return;}
+  if(t.dataset.redeem){var r=allCustomers().filter(function(x){return x.id===t.dataset.redeem;})[0]; if(r) redeem(r); return;}
+  if(t.dataset.tpl){$("notif-msg").value=t.dataset.tpl;return;}
+  if(t.dataset.wallet){
+    S.joinStep="wallet"; addActivity(S.me.name+" a ajouté sa carte à "+(t.dataset.wallet==="apple"?"Apple Wallet":"Google Wallet"));
+    renderAll();
+    if(S.scenarios.welcome) setTimeout(function(){pushPhone("Bienvenue","Bienvenue "+S.me.name+" ! Ta carte "+S.shop.name+" est dans ton Wallet. À très vite.");},700);
+    return;
+  }
+  if(t.hasAttribute("data-open-wheel")){openWheel();return;}
+  if(t.dataset.segDel!==undefined){S.wheel.segments.splice(Number(t.dataset.segDel),1);renderMain();return;}
+  if(t.id==="seg-add"){S.wheel.segments.push({label:"Nouveau lot",w:10});renderMain();return;}
+  if(t.id==="wheel-test"){
+    t.disabled=true; $("wheel-test-out").textContent="";
+    spin($("wheel-prev"),S.wheel.segments,prevRot,function(i){$("wheel-test-out").textContent="Résultat du test : "+S.wheel.segments[i].label;t.disabled=false;});
+    return;
+  }
+  if(t.id==="notif-send"){
+    var msg=$("notif-msg").value.trim(), tg=$("notif-target").value;
+    if(!msg){toast("Écris un message avant d'envoyer");$("notif-msg").focus();return;}
+    var targets=allCustomers().filter(function(c){
+      if(!c.consent) return false;
+      if(tg==="near") return S.shop.goal-c.stamps<=2;
+      if(tg==="miss") return c.lastDays>30;
+      return true;
+    });
+    S.sent.unshift({msg:msg,n:targets.length});
+    addActivity("Campagne envoyée à "+targets.length+" client"+(targets.length>1?"s":""));
+    var reached=targets.indexOf(S.me)>-1;
+    renderMain(); renderNav();
+    toast("Envoyé à "+targets.length+" client"+(targets.length>1?"s":"")+(reached?", dont ta cliente en direct":""));
+    if(reached) pushPhone("Nouveau message",msg);
+    return;
+  }
+});
+
+document.addEventListener("submit",function(e){
+  if(e.target.id!=="join-form") return;
+  e.preventDefault();
+  var name=$("join-name").value.trim(), contact=$("join-contact").value.trim(), consent=$("join-consent").checked;
+  S.join={name:name,contact:contact,consent:consent,error:""};
+  if(!name){S.join.error="Indique ton prénom pour créer ta carte.";renderPhone();$("join-name").focus();return;}
+  if(!contact){S.join.error="Indique ton téléphone ou ton e-mail pour retrouver ta carte.";renderPhone();$("join-contact").focus();return;}
+  S.me={id:"me",name:name,stamps:0,visits:0,lastDays:0,consent:consent,ready:false};
+  S.joinStep="add";
+  addActivity(name+" s'est inscrit·e au programme");
+  renderAll();
+});
+
+document.addEventListener("input",function(e){
+  var t=e.target;
+  if(t.id==="shop-name"){S.shop.name=t.value||"Mon commerce";renderNav();renderCardPreview();renderPhone();}
+  else if(t.id==="shop-reward"){S.shop.reward=t.value||"Une récompense";renderCardPreview();renderPhone();}
+  else if(t.id==="shop-goal"){
+    S.shop.goal=Number(t.value); $("goal-out").textContent=t.value;
+    allCustomers().forEach(function(c){if(c.stamps>=S.shop.goal){c.stamps=S.shop.goal;c.ready=true;}else c.ready=false;});
+    renderCardPreview();renderPhone();
+  }
+  else if(t.id==="scan-search"){S.scanFilter=t.value;$("scan-list").innerHTML=scanRows();}
+  else if(t.id==="client-search"){S.clientFilter=t.value;$("client-body").innerHTML=clientRows();}
+  else if(t.id==="join-name"){S.join.name=t.value;}
+  else if(t.id==="join-contact"){S.join.contact=t.value;}
+  else if(t.dataset.segL!==undefined){S.wheel.segments[Number(t.dataset.segL)].label=t.value;drawWheel($("wheel-prev"),S.wheel.segments,prevRot.v);}
+  else if(t.dataset.segW!==undefined){
+    S.wheel.segments[Number(t.dataset.segW)].w=Math.max(0,Math.min(100,Number(t.value)||0));
+    var tot=S.wheel.segments.reduce(function(s,x){return s+x.w;},0)||1;
+    S.wheel.segments.forEach(function(s,i){var p=$("seg-p-"+i); if(p) p.textContent=Math.round(s.w/tot*100)+"%";});
+  }
+});
+document.addEventListener("change",function(e){
+  var t=e.target;
+  if(t.name==="shop-color"){S.shop.color=t.value;renderNav();renderCardPreview();renderPhone();}
+  else if(t.name==="wheel-trigger"){S.wheel.trigger=t.value;renderPhone();}
+  else if(t.dataset.scen){S.scenarios[t.dataset.scen]=t.checked;toast((t.checked?"Activé : ":"Désactivé : ")+t.getAttribute("aria-label"));}
+  else if(t.id==="join-consent"){S.join.consent=t.checked;}
+});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&$("phone-modal").innerHTML) closeWheel();});
+window.addEventListener("resize",function(){if(S.tab==="carte") renderCardPreview(); if(S.tab==="roue"&&$("wheel-prev")) drawWheel($("wheel-prev"),S.wheel.segments,prevRot.v);});
+window.addEventListener("hashchange",function(){var h=location.hash.slice(1); if(h==="client"||h==="commercant") setView(h);});
+
+/* Démarrage */
+var h0=location.hash.slice(1);
+if(h0==="client") S.view="client";
+setView(S.view);
+renderAll();
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){if(S.tab==="roue"&&$("wheel-prev")) drawWheel($("wheel-prev"),S.wheel.segments,prevRot.v);});
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Combak · app</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  /* Combak app : fond bleu glacier, encre nuit, bleu électrique pour l'action, corail réservé au logo et aux récompenses. Layout : menu latéral + contenu, carte 3D au centre des écrans client. */
+  --bg:#F3F6FF; --paper:#FFFFFF; --line:#DCE3FA; --soft:#E8EEFF;
+  --ink:#0B1033; --ink-2:#424A72; --ink-3:#5F6890;
+  --blue:#2F5BFF; --blue-deep:#2448E8; --navy:#070B24; --coral:#FF5A3C;
+  --good:#127A57; --good-bg:#DDF3EA; --warn:#8A5A00; --warn-bg:#FFF0C7; --bad:#B3261E; --bad-bg:#FDE4E1;
+  --display:"Bricolage Grotesque", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --body:"Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--display);letter-spacing:-0.02em;line-height:1.1;margin:0;text-wrap:balance}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.5}
+:focus-visible{outline:3px solid var(--coral);outline-offset:2px;border-radius:8px}
+.num{font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+.logo{display:inline-flex;align-items:baseline;font-family:var(--display);font-weight:800;letter-spacing:-0.045em;line-height:1}
+.logo svg{width:.56em;height:.56em;margin:0 .02em}
+
+/* Connexion */
+.auth{min-height:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.auth-side{background:var(--navy);color:#fff;padding:48px;display:flex;flex-direction:column;justify-content:space-between;gap:32px;position:relative;overflow:hidden}
+.auth-side .glow{position:absolute;width:560px;height:560px;border-radius:50%;background:var(--blue);filter:blur(90px);opacity:.45;top:-160px;left:-160px;animation:drift 18s ease-in-out infinite}
+@keyframes drift{50%{transform:translate(120px,90px) scale(1.1)}}
+.auth-main{padding:48px 24px;display:flex;align-items:center;justify-content:center}
+.auth-box{width:100%;max-width:420px;display:flex;flex-direction:column;gap:18px}
+@media (max-width:900px){.auth{grid-template-columns:minmax(0,1fr)}.auth-side{padding:28px 20px}.auth-side .big{display:none}}
+.demo-acc{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.demo-acc button{text-align:left;border:1px solid var(--line);background:var(--paper);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:2px;min-height:64px}
+.demo-acc button:hover{border-color:var(--blue)}
+.demo-acc b{font-size:14px}
+.demo-acc span{font-size:12px;color:var(--ink-3)}
+
+/* Shell */
+.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;padding:12px 20px;background:rgba(243,246,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.spacer{flex:1}
+.role{font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--ink);color:#fff;white-space:nowrap}
+.role.merchant{background:var(--blue)}
+.role.staff{background:#6B4BFF}
+.role.customer{background:var(--coral);color:var(--ink)}
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:calc(100% - 65px)}
+.sidenav{border-right:1px solid var(--line);padding:20px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:65px;align-self:start;height:calc(100vh - 65px)}
+.tenant{display:flex;gap:10px;align-items:center;padding:6px 10px 18px}
+.avatar{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:18px;flex:none}
+.nav-btn{display:flex;align-items:center;gap:12px;border:0;background:transparent;padding:10px 12px;border-radius:12px;font-weight:600;color:var(--ink-2);text-align:left;width:100%}
+.nav-btn svg{width:20px;height:20px;flex:none}
+.nav-btn:hover{background:var(--soft);color:var(--ink)}
+.nav-btn[aria-current="page"]{background:var(--ink);color:#fff}
+.main{padding:28px 32px 64px;min-width:0;display:flex;flex-direction:column;gap:24px;max-width:1240px}
+
+
+/* Commun */
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.page-head h1{font-size:34px}
+.page-head p{margin:6px 0 0;color:var(--ink-2);max-width:62ch}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:24px;padding:22px}
+.panel h2{font-size:20px;margin-bottom:14px}
+.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.grid-kpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+@media (max-width:900px){.grid-2,.grid-3{grid-template-columns:minmax(0,1fr)}.grid-kpi{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.kpi .v{font-family:var(--display);font-weight:800;font-size:32px;letter-spacing:-0.03em;line-height:1}
+.kpi .l{font-size:13px;color:var(--ink-2);font-weight:500}
+.btn{border:0;border-radius:999px;padding:11px 18px;font-weight:700;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;text-decoration:none}
+.btn svg{width:18px;height:18px}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--blue-deep)}
+.btn-dark{background:var(--ink);color:#fff}
+.btn-dark:hover{background:#1A2257}
+.btn-soft{background:var(--soft);color:var(--ink)}
+.btn-soft:hover{background:#DCE5FF}
+.btn-danger{background:var(--bad-bg);color:var(--bad)}
+.btn-sm{padding:7px 12px;min-height:36px;font-size:14px}
+.btn-block{width:100%}
+.link{background:none;border:0;padding:0;color:var(--blue-deep);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.chip.good{background:var(--good-bg);color:var(--good)}
+.chip.warn{background:var(--warn-bg);color:var(--warn)}
+.chip.bad{background:var(--bad-bg);color:var(--bad)}
+.chip.info{background:var(--soft);color:var(--ink)}
+.chip.coral{background:#FFE1D9;color:#A8301A}
+.muted{color:var(--ink-2)}
+.small{font-size:13px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label,.field legend{font-weight:600;font-size:14px}
+.input{border:1.5px solid var(--line);background:var(--paper);border-radius:12px;padding:10px 12px;min-height:44px;width:100%}
+.input:focus{outline:none;border-color:var(--blue)}
+textarea.input{min-height:90px;resize:vertical}
+.error{margin:0;color:var(--bad);font-weight:600;font-size:14px}
+.note{display:flex;gap:12px;align-items:flex-start;background:var(--soft);border-radius:16px;padding:14px 16px;font-size:14px}
+.note svg{flex:none;width:20px;height:20px;margin-top:1px}
+.note.good{background:var(--good-bg)}
+.note.warn{background:var(--warn-bg)}
+.list{display:flex;flex-direction:column}
+.row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.row:first-child{border-top:0}
+.row .grow{flex:1;min-width:160px}
+.bar{height:8px;border-radius:999px;background:var(--soft);overflow:hidden}
+.bar span{display:block;height:100%;background:var(--blue);border-radius:999px}
+.table-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:640px}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);text-align:left;font-weight:700;padding:10px 12px;border-bottom:1px solid var(--line)}
+td{padding:12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.toggle{position:relative;width:48px;height:28px;flex:none;display:inline-block}
+.toggle input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.toggle span{position:absolute;inset:0;background:#C9D1EE;border-radius:999px;transition:background .2s}
+.toggle span::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .2s}
+.toggle input:checked + span{background:var(--good)}
+.toggle input:checked + span::after{transform:translateX(20px)}
+.toggle input:focus-visible + span{outline:3px solid var(--coral);outline-offset:2px}
+.swatches{display:flex;gap:10px;flex-wrap:wrap}
+.swatch{position:relative;width:44px;height:44px}
+.swatch input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.swatch span{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(11,16,51,.15)}
+.swatch input:checked + span{box-shadow:0 0 0 3px var(--bg),0 0 0 6px var(--ink)}
+.swatch input:focus-visible + span{outline:3px solid var(--coral);outline-offset:6px}
+.yes{color:var(--good);font-weight:700}
+.no{color:var(--ink-3)}
+.chart svg{width:100%;height:auto;display:block}
+
+/* Scanner */
+.viewfinder{position:relative;height:220px;border-radius:24px;background:var(--navy);overflow:hidden;display:flex;align-items:center;justify-content:center;color:#C9D5FF;font-size:14px}
+.viewfinder .frame{position:absolute;width:150px;height:150px}
+.viewfinder .frame i{position:absolute;width:34px;height:34px;border:4px solid var(--blue)}
+.viewfinder .frame i:nth-child(1){top:0;left:0;border-right:0;border-bottom:0;border-radius:10px 0 0 0}
+.viewfinder .frame i:nth-child(2){top:0;right:0;border-left:0;border-bottom:0;border-radius:0 10px 0 0}
+.viewfinder .frame i:nth-child(3){bottom:0;left:0;border-right:0;border-top:0;border-radius:0 0 0 10px}
+.viewfinder .frame i:nth-child(4){bottom:0;right:0;border-left:0;border-top:0;border-radius:0 0 10px 0}
+.viewfinder .line{position:absolute;left:calc(50% - 70px);width:140px;height:2px;background:#7FA0FF;box-shadow:0 0 12px #7FA0FF;animation:scan 2.2s ease-in-out infinite}
+.viewfinder .label{position:absolute;bottom:14px}
+@keyframes scan{0%,100%{top:calc(50% - 66px)}50%{top:calc(50% + 66px)}}
+
+/* Carte 3D */
+.tilt-stage{perspective:1100px;touch-action:none;display:flex;align-items:center;justify-content:center;padding:14px 0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.card-float{transform-style:preserve-3d}
+.tilt-stage:not(.active) .card-float{animation:float 7s ease-in-out infinite}
+@keyframes float{0%,100%{transform:rotateX(8deg) rotateY(-12deg) translateY(0)}50%{transform:rotateX(-3deg) rotateY(12deg) translateY(-8px)}}
+.card3d{--cw:340px;position:relative;width:var(--cw);max-width:100%;aspect-ratio:1.586;font-size:calc(var(--cw) / 23);transform-style:preserve-3d;transform:rotateX(var(--rx,0deg)) rotateY(calc(var(--ry,0deg) + var(--flip,0deg)));transition:transform .8s cubic-bezier(.2,.8,.2,1)}
+.tilt-stage.active .card3d{transition:transform 90ms linear}
+.card3d .edge{position:absolute;inset:0;border-radius:1.25em}
+.card3d .face{position:absolute;inset:0;border-radius:1.25em;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:0 1.6em 2.8em rgba(5,8,40,.35)}
+.card3d .front{transform:translateZ(3px)}
+.card3d .back{transform:rotateY(180deg) translateZ(3px)}
+.card3d .inner{position:relative;height:100%;padding:1.1em 1.25em;display:flex;flex-direction:column;justify-content:space-between}
+.card3d .deco{position:absolute;right:-3.5em;bottom:-4.5em;width:13em;height:13em;opacity:.16}
+.card3d .shop-name{font-family:var(--display);font-weight:800;font-size:1.15em;letter-spacing:-0.02em;line-height:1}
+.card3d .kind{font-size:.62em;font-weight:600;opacity:.85;margin-top:.3em}
+.card3d .count{font-family:var(--display);font-weight:800;font-size:2.8em;letter-spacing:-0.04em;line-height:.9}
+.card3d .count small{font-family:var(--body);font-size:.27em;font-weight:600;letter-spacing:0;margin-left:.3em}
+.card3d .stamps{display:flex;flex-wrap:wrap;gap:.32em}
+.card3d .st{width:1.35em;height:1.35em;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none}
+.card3d .st svg{width:.8em;height:.8em}
+.card3d .reward{font-size:.68em;font-weight:600}
+.card3d .sheen{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at var(--mx,50%) var(--my,30%),rgba(255,255,255,var(--sh,.2)),rgba(255,255,255,0) 55%)}
+.card3d .holo{position:absolute;inset:0;pointer-events:none;mix-blend-mode:overlay;opacity:.5;background:linear-gradient(110deg,rgba(255,255,255,0) 20%,rgba(140,220,255,.55) 35%,rgba(255,170,240,.45) 45%,rgba(255,255,255,0) 60%);background-size:200% 100%;animation:holo 6s linear infinite}
+@keyframes holo{to{background-position:200% 50%}}
+.card3d .mark{display:inline-flex;align-items:baseline;font-family:var(--display);font-weight:800;font-size:1em;letter-spacing:-0.045em;line-height:1}
+.card3d .mark svg{width:.56em;height:.56em;margin:0 .02em}
+.card3d .back .inner{flex-direction:row;align-items:center;gap:1em;justify-content:flex-start}
+.card3d .qr{background:#fff;border-radius:.6em;padding:.45em;flex:none}
+.card3d .qr svg{width:6.2em;height:6.2em;display:block}
+.card3d .who{font-family:var(--display);font-weight:800;font-size:1.15em;line-height:1.05}
+.card3d .back p{margin:.35em 0 0;font-size:.62em;line-height:1.35}
+
+/* Notifs (bannière) */
+.banner{position:fixed;left:50%;top:14px;z-index:60;width:min(380px,calc(100% - 24px));background:rgba(255,255,255,.97);border-radius:20px;padding:12px 14px;box-shadow:0 16px 40px rgba(11,16,51,.25);display:flex;gap:10px;align-items:flex-start;transform:translate(-50%,-160%);transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+.banner.show{transform:translate(-50%,0)}
+.app-ico{width:36px;height:36px;border-radius:10px;background:var(--blue);display:flex;align-items:center;justify-content:center;flex:none}
+.app-ico svg{width:22px;height:22px}
+.banner b{display:block;font-size:13px}
+.banner p{margin:2px 0 0;font-size:13px;line-height:1.35}
+.msg{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:12px 14px;font-size:14px}
+.msg .t{font-size:12px;color:var(--ink-3);font-weight:600}
+.wallet-btn{width:100%;min-height:50px;border-radius:14px;border:0;background:#000;color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:10px}
+.wallet-btn svg{width:22px;height:22px}
+.prize{background:#FFF0C7;border-radius:16px;padding:12px 14px;font-weight:600;font-size:14px;display:flex;gap:10px;align-items:center;border:0;width:100%;text-align:left}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+
+/* Roue */
+.wheel-wrap{position:relative;width:100%;max-width:280px;margin:0 auto;aspect-ratio:1}
+.wheel-wrap canvas{width:100%;height:100%;display:block}
+.wheel-pin{position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:24px solid var(--coral);filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+.seg-row{display:grid;grid-template-columns:22px minmax(0,1fr) 92px 44px;gap:10px;align-items:center}
+.dot{width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(11,16,51,.2)}
+.icon-btn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--paper);display:flex;align-items:center;justify-content:center}
+.icon-btn svg{width:18px;height:18px}
+
+/* Fenêtre modale */
+.modal{position:fixed;inset:0;z-index:50;background:rgba(7,11,36,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+.sheet{background:var(--bg);width:100%;max-width:440px;border-radius:28px;padding:24px 20px;display:flex;flex-direction:column;gap:14px;max-height:92vh;overflow:auto}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,calc(100% + 40px));z-index:70;background:var(--ink);color:#fff;padding:12px 18px;border-radius:999px;font-weight:600;font-size:14px;box-shadow:0 12px 30px rgba(11,16,51,.3);transition:transform .35s cubic-bezier(.2,.8,.2,1);max-width:calc(100% - 32px);text-align:center}
+.toast.show{transform:translate(-50%,0)}
+
+@media (max-width:480px){.hide-xs{display:none}.topbar{padding:10px 12px}}
+@media (prefers-reduced-motion:reduce){
+  .tilt-stage:not(.active) .card-float,.viewfinder .line,.card3d .holo,.auth-side .glow{animation:none}
+  .card3d,.banner,.toast{transition:none}
+}
+.mob-id,.view-btn,.bnav{display:none}
+.seg-views{display:flex}
+@media (max-width:980px){
+  .layout{grid-template-columns:minmax(0,1fr)}
+  .sidenav{display:none}
+  .main{padding:20px 16px 48px}
+  .layout.has-bnav .main{padding-bottom:calc(104px + env(safe-area-inset-bottom))}
+  .hide-sm{display:none}
+  /* En-tête */
+  .topbar{padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top))}
+  .desk-logo,.desk-only,.seg-views{display:none !important}
+  .mob-id{display:flex;align-items:center;gap:10px;min-width:0;margin-right:auto}
+  .mob-id b{display:block;font-size:15px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mob-id small{display:block;font-size:12px;color:var(--ink-3);font-weight:600}
+  .view-btn{display:flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:4px 8px 4px 4px;min-height:40px;flex:none}
+  .view-btn svg{width:16px;height:16px;color:var(--ink-2)}
+  /* Barre d'onglets en bas */
+  .bnav{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--paper);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+  .bn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:none;min-height:56px;padding:4px 2px;border-radius:14px;color:var(--ink-3);font-size:11px;font-weight:600}
+  .bn svg{width:23px;height:23px}
+  .bn[aria-current="page"]{color:var(--blue-deep)}
+  .bn[aria-current="page"] svg{stroke-width:2.4}
+  .bn-scan{color:#fff !important}
+  .bn-scan svg{width:26px;height:26px;padding:12px;box-sizing:content-box;background:var(--blue);border-radius:18px;margin-top:-22px;border:4px solid var(--paper)}
+  .bn-scan span{color:var(--ink-3)}
+  .bn-scan[aria-current="page"] span{color:var(--blue-deep)}
+  /* Titres et blocs */
+  .page-head{align-items:flex-start}
+  .page-head h1{font-size:28px}
+  .page-head p{font-size:14px}
+  .page-head > .btn{width:100%}
+  .panel{padding:18px;border-radius:20px}
+  .grid-kpi{gap:10px}
+  .kpi{padding:14px}
+  .kpi .v{font-size:28px}
+  .viewfinder{height:170px}
+  /* Ma carte : l'aperçu d'abord */
+  .card-grid > section:last-child{order:-1;padding:6px 10px 14px}
+  /* Roue : un lot par ligne, le poids dessous */
+  .seg-row{grid-template-columns:22px minmax(0,1fr) 44px;grid-template-areas:"dot label del" ". weight weight";row-gap:6px}
+  .seg-row > .dot{grid-area:dot}.seg-row > input{grid-area:label}.seg-row > div{grid-area:weight}.seg-row > button{grid-area:del}
+  .seg-row > div::before{content:"Chances";font-size:13px;font-weight:600;color:var(--ink-3);margin-right:6px}
+  .seg-row > div input{max-width:90px}
+  /* Feuilles du bas */
+  .modal{align-items:flex-end;padding:0}
+  .sheet{max-width:none;border-radius:26px 26px 0 0;padding:10px 18px calc(18px + env(safe-area-inset-bottom));max-height:88vh}
+  .toast{bottom:calc(92px + env(safe-area-inset-bottom))}
+}
+.sheet-grab{width:44px;height:5px;border-radius:99px;background:#C9D1EE;margin:4px auto 2px}
+.sheet-list{display:flex;flex-direction:column;gap:8px}
+.sheet-item{display:flex;align-items:center;gap:14px;text-align:left;border:1px solid var(--line);background:var(--paper);border-radius:16px;padding:12px 14px;min-height:60px;color:var(--ink)}
+.sheet-item[aria-current="page"]{border-color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue)}
+.sheet-item b{display:block;font-size:15px}
+.sheet-item small{display:block;font-size:13px;color:var(--ink-2);margin-top:1px}
+.si-ico{width:40px;height:40px;border-radius:12px;background:var(--soft);color:var(--blue-deep);display:flex;align-items:center;justify-content:center;flex:none}
+.si-ico svg{width:20px;height:20px}
+/* Tableaux en cartes sur téléphone */
+@media (max-width:700px){
+  .table-wrap:has(.m-cards){overflow:visible}
+  table.m-cards{min-width:0;display:block}
+  table.m-cards thead{display:none}
+  table.m-cards tbody{display:flex;flex-direction:column;gap:10px}
+  table.m-cards tr{display:grid;gap:8px 12px;background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:14px}
+  table.m-cards td{display:block;padding:0;border:0;min-width:0}
+  table.m-cards td[data-l]::before{content:attr(data-l);display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin-bottom:2px}
+  .m-cust tr{grid-template-columns:1fr 1fr;grid-template-areas:"name status" "stamps stamps" "visits last" "notif wallet"}
+  .m-cust .c-name{grid-area:name;font-size:16px;align-self:center}
+  .m-cust .c-status{grid-area:status;justify-self:end;text-align:right;display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}
+  .m-cust .c-stamps{grid-area:stamps}.m-cust .c-stamps .bar{flex:1;width:auto !important}
+  .m-cust .c-visits{grid-area:visits}.m-cust .c-last{grid-area:last}
+  .m-cust .c-notif{grid-area:notif}.m-cust .c-wallet{grid-area:wallet}
+  .m-ten tr{grid-template-columns:1fr 1fr 1fr;grid-template-areas:"name name status" "shops cards mrr" "act act act"}
+  .m-ten .t-name{grid-area:name}.m-ten .t-status{grid-area:status;justify-self:end}
+  .m-ten .t-shops{grid-area:shops}.m-ten .t-cards{grid-area:cards}.m-ten .t-mrr{grid-area:mrr}
+  .m-ten .t-act{grid-area:act}.m-ten .t-act .btn{width:100%}
+}
+.toast{pointer-events:none;visibility:hidden}
+.toast.show{visibility:visible}
+.banner{visibility:hidden;transition:transform .45s cubic-bezier(.2,.8,.2,1),visibility 0s linear .45s}
+.banner.show{visibility:visible;transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal"></div>
+<div class="banner" id="banner" role="status" aria-live="polite"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* =========================================================
+   1. "Base de données" de démo (dans ce navigateur)
+   En production : Postgres (Supabase) avec Row Level Security.
+   ========================================================= */
+var KEY="combak-demo-v4";
+/* Offre unique, prix par boutique : 49 € (1), 39 € chacune (2 à 4), 34 € chacune (5 à 9), devis dès 10 */
+function unitPrice(n){return n>=10?null:n>=5?34:n>=2?39:49;}
+function monthly(t){var u=unitPrice(t.shops||1);return u===null?null:u*(t.shops||1);}
+function priceTxt(t){var m=monthly(t);return m===null?"Sur devis":m+" €";}
+var COLORS=[
+  {id:"bleu",name:"Bleu",bg:"#2F5BFF",bg2:"#1A33B8",fg:"#FFFFFF",edge:"#142A9C",fill:"#FFFFFF",mark:"#2448E8",empty:"rgba(255,255,255,.55)",back:"#0B1033",backFg:"#FFFFFF"},
+  {id:"nuit",name:"Nuit",bg:"#1A2257",bg2:"#0B1033",fg:"#FFFFFF",edge:"#050819",fill:"#FF5A3C",mark:"#0B1033",empty:"rgba(255,255,255,.5)",back:"#2F5BFF",backFg:"#FFFFFF"},
+  {id:"corail",name:"Corail",bg:"#FF6A4D",bg2:"#F04A2A",fg:"#0B1033",edge:"#C93E22",fill:"#0B1033",mark:"#FF5A3C",empty:"rgba(11,16,51,.45)",back:"#0B1033",backFg:"#FFFFFF"},
+  {id:"beurre",name:"Beurre",bg:"#FFD166",bg2:"#FFBE33",fg:"#0B1033",edge:"#D49A22",fill:"#0B1033",mark:"#FFC94A",empty:"rgba(11,16,51,.45)",back:"#0B1033",backFg:"#FFFFFF"},
+  {id:"menthe",name:"Menthe",bg:"#4FD6A6",bg2:"#26B585",fg:"#0B1033",edge:"#1F9A6F",fill:"#0B1033",mark:"#3CCB98",empty:"rgba(11,16,51,.45)",back:"#0B1033",backFg:"#FFFFFF"}
+];
+function uid(p){return p+Math.random().toString(36).slice(2,9);}
+function seed(){
+  var t=[
+    {id:"t1",name:"Café Lumière",type:"Café",address:"12 rue des Lilas, Lyon",shops:1,status:"actif",daysLeft:0,card:{reward:"Un café offert",goal:10,color:"bleu"},geoText:"Vous passez juste à côté ! Votre café vous attend.",geoOn:true,scen:{welcome:true,near:true,miss:true,birthday:true,review:true},wheel:{trigger:"inscription",segments:[{label:"Un café offert",w:10},{label:"-10 % sur l'addition",w:25},{label:"Un tampon bonus",w:30},{label:"Un cookie offert",w:15},{label:"Retente demain",w:20}]},visits:186,rewards:23,weeks:[34,41,38,47,52,49,58,61]},
+    {id:"t2",name:"Barber Nord",type:"Barbier",address:"4 place Jean Macé, Lyon",shops:1,status:"essai",daysLeft:9,card:{reward:"Une coupe offerte",goal:8,color:"nuit"},geoText:"Une petite coupe en passant ?",geoOn:true,scen:{welcome:true,near:true,miss:true,birthday:false,review:true},wheel:{trigger:"parrainage",segments:[{label:"-5 € sur la coupe",w:40},{label:"Un soin barbe offert",w:20},{label:"Retente au prochain passage",w:40}]},visits:74,rewards:6,weeks:[12,15,14,18,17,20,19,22]},
+    {id:"t3",name:"Fleurs de Lise",type:"Fleuriste",address:"28 cours Vitton, Lyon",shops:2,status:"actif",daysLeft:0,card:{reward:"Un bouquet offert",goal:6,color:"menthe"},geoText:"Les pivoines sont arrivées !",geoOn:false,scen:{welcome:true,near:true,miss:false,birthday:true,review:false},wheel:{trigger:"instagram",segments:[{label:"Une rose offerte",w:50},{label:"-10 %",w:30},{label:"Retente demain",w:20}]},visits:52,rewards:9,weeks:[8,9,12,10,11,14,13,15]},
+    {id:"t4",name:"Pizzeria Nonna",type:"Restaurant",address:"7 rue Mercière, Lyon",shops:6,status:"suspendu",daysLeft:0,card:{reward:"Une pizza offerte",goal:10,color:"corail"},geoText:"Le four est chaud, on vous attend !",geoOn:true,scen:{welcome:true,near:true,miss:true,birthday:true,review:true},wheel:{trigger:"inscription",segments:[{label:"Un tiramisu offert",w:30},{label:"Une boisson offerte",w:40},{label:"Retente demain",w:30}]},visits:0,rewards:0,weeks:[30,28,31,0,0,0,0,0]}
+  ];
+  var users=[
+    {id:"u0",email:"admin@combak.fr",pw:"demo",role:"superadmin",name:"Toi (fondateur)"},
+    {id:"u1",email:"contact@cafelumiere.fr",pw:"demo",role:"merchant",tenantId:"t1",name:"Sophie"},
+    {id:"u2",email:"equipe@cafelumiere.fr",pw:"demo",role:"staff",tenantId:"t1",name:"Malik"},
+    {id:"u3",email:"hello@barbernord.fr",pw:"demo",role:"merchant",tenantId:"t2",name:"Karim"},
+    {id:"u4",email:"lise@fleursdelise.fr",pw:"demo",role:"merchant",tenantId:"t3",name:"Lise"},
+    {id:"u5",email:"nonna@pizzerianonna.fr",pw:"demo",role:"merchant",tenantId:"t4",name:"Giulia"},
+    {id:"u6",email:"lea@exemple.fr",pw:"demo",role:"customer",name:"Léa"}
+  ];
+  var names=["Camille R.","Hugo B.","Inès M.","Lucas D.","Chloé P.","Nathan G.","Manon L.","Yanis K.","Sarah T.","Théo V.","Jade F.","Adam S.","Emma C.","Noah P."];
+  var cards=[];
+  function addCards(tid,count,goal,off){for(var i=0;i<count;i++){var n=names[(i+off)%names.length];var last=[2,5,1,41,9,58,3,36,6,12,73,4,15,22][(i+off)%14];cards.push({id:uid("k"),tenantId:tid,customerUserId:null,name:n,stamps:(i*3+off)%goal,visits:(i*7+off)%30+1,lastDays:last,consent:(i+off)%6!==5,ready:false,joined:"2026",wallet:(i+off)%3===0?"google":"apple"});}}
+  addCards("t1",12,10,0);addCards("t2",7,8,3);addCards("t3",6,6,5);addCards("t4",9,10,1);
+  cards.unshift({id:"k_lea1",tenantId:"t1",customerUserId:"u6",name:"Léa",stamps:7,visits:7,lastDays:3,consent:true,ready:false,joined:"oct. 2026",wallet:"apple"});
+  cards.unshift({id:"k_lea2",tenantId:"t2",customerUserId:"u6",name:"Léa",stamps:2,visits:2,lastDays:18,consent:true,ready:false,joined:"nov. 2026",wallet:"apple"});
+  return {tenants:t,users:users,cards:cards,notifs:[
+    {id:uid("n"),cardId:"k_lea1",title:"Presque !",body:"Plus que 3 passages et un café offert est pour toi.",t:"Hier"}
+  ],campaigns:[],activity:{t1:[{t:"Il y a 12 min",txt:"Inès M. a reçu un tampon"},{t:"Ce matin",txt:"Relance « Tu nous manques » envoyée à 3 clients"}],t2:[],t3:[],t4:[]},spun:{},session:null};
+}
+var DB;
+function load(){try{var raw=localStorage.getItem(KEY);if(raw){DB=JSON.parse(raw);return;}}catch(e){}DB=seed();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(DB));}catch(e){}}
+load();
+
+/* UI state (non sauvegardé) */
+var UI={tab:null,authMode:"pick",authError:"",join:{tid:"t1",step:"form",name:"",contact:"",consent:false,error:"",cardId:null,wallet:null},scanFilter:"",clientFilter:"",openCard:null,signup:{}};
+
+/* =========================================================
+   2. Contrôle d'accès : qui peut faire quoi
+   En production : vérifié côté serveur + politiques RLS.
+   ========================================================= */
+var PERMS={
+  "platform.view":["superadmin"],
+  "tenant.settings":["merchant"],
+  "tenant.customers.read":["merchant"],
+  "tenant.campaigns":["merchant"],
+  "tenant.team":["merchant"],
+  "tenant.billing":["merchant"],
+  "tenant.scan":["merchant","staff"],
+  "customer.cards":["customer"]
+};
+function me(){return DB.session?DB.users.filter(function(u){return u.id===DB.session;})[0]||null:null;}
+function can(perm){var u=me();return !!u&&(PERMS[perm]||[]).indexOf(u.role)>-1;}
+function myTenant(){var u=me();return u&&u.tenantId?tenant(u.tenantId):null;}
+function tenant(id){return DB.tenants.filter(function(t){return t.id===id;})[0];}
+/* Cloisonnement : un commerçant ne voit QUE les cartes de son commerce */
+function tenantCards(tid){return DB.cards.filter(function(c){return c.tenantId===tid;});}
+function myCustomerCards(){var u=me();return DB.cards.filter(function(c){return c.customerUserId===u.id;});}
+
+/* =========================================================
+   3. Utilitaires
+   ========================================================= */
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];});}
+function $(id){return document.getElementById(id);}
+function colorOf(t){for(var i=0;i<COLORS.length;i++){if(COLORS[i].id===t.card.color)return COLORS[i];}return COLORS[0];}
+var toastT;function toast(m){var t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove("show");},2800);}
+function statusOf(c){if(c.lastDays>30)return{txt:"À relancer",cls:"warn"};if(c.visits>=15)return{txt:"Fidèle",cls:"good"};return{txt:"Régulier",cls:"info"};}
+function lastTxt(d){return d===0?"Aujourd'hui":(d===1?"Hier":"Il y a "+d+" j");}
+function activity(tid,txt){(DB.activity[tid]=DB.activity[tid]||[]).unshift({t:"À l'instant",txt:txt});if(DB.activity[tid].length>8)DB.activity[tid].pop();}
+var BOOM=function(c){return '<svg aria-hidden="true" viewBox="0 0 100 100"><path d="M80 50 A30 30 0 1 1 65 24" fill="none" stroke="'+c+'" stroke-width="16" stroke-linecap="round"/><path d="M62 9 L73 28 L52 31" fill="none" stroke="'+c+'" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/></svg>';};
+function logo(size,color){return '<span class="logo" style="font-size:'+size+'px;color:'+(color||"inherit")+'" role="img" aria-label="Combak">c'+BOOM("#FF5A3C")+'mbak</span>';}
+function ic(p){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';}
+var I={
+  home:ic('<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/>'),
+  card:ic('<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18"/>'),
+  scan:ic('<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M4 12h16"/>'),
+  users:ic('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c2 .7 3.2 2.5 3.6 5.2"/>'),
+  bell:ic('<path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9"/><path d="M10 20a2 2 0 0 0 4 0"/>'),
+  wheel:ic('<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/>'),
+  team:ic('<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>'),
+  bill:ic('<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h4"/>'),
+  shop:ic('<path d="M4 9 5 4h14l1 5"/><path d="M4 9v11h16V9"/><path d="M4 9c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3"/>'),
+  lock:ic('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'),
+  info:ic('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'),
+  shield:ic('<path d="M12 3 4 6v6c0 4.5 3.4 8 8 9 4.6-1 8-4.5 8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/>'),
+  pin:ic('<path d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>'),
+  gift:ic('<path d="M4 10h16v10H4zM12 10v10M3 7h18v3H3zM12 7C10 3 6 4 8 7M12 7c2-4 6-3 4 0"/>'),
+  trash:ic('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'),
+  wallet:ic('<rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M7 6V4h10v2"/>'),
+  out:ic('<path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 17l5-5-5-5M15 12H4"/>'),
+  user:ic('<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>'),
+  plus:ic('<path d="M12 5v14M5 12h14"/>'),
+  dots:ic('<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>'),
+  chev:ic('<path d="m6 9 6 6 6-6"/>')
+};
+function qrSVG(seed){
+  var n=21,out="",s=seed||7;function r(){s=(s*1103515245+12345)%2147483648;return s/2147483648;}
+  for(var y=0;y<n;y++){for(var x=0;x<n;x++){var on,tl=y<7&&x<7,tr=y<7&&x>13,bl=y>13&&x<7;
+    if(tl||tr||bl){var yy=bl?y-14:y,xx=tr?x-14:x;on=yy===0||yy===6||xx===0||xx===6||(yy>=2&&yy<=4&&xx>=2&&xx<=4);}
+    else if((y===7&&(x<8||x>12))||(x===7&&(y<8||y>12))||(y===13&&x<8)||(x===13&&y<8))on=false;else on=r()>.52;
+    if(on)out+='<rect x="'+x+'" y="'+y+'" width="1.02" height="1.02"/>';}}
+  return '<svg viewBox="0 0 21 21" fill="#0B1033" aria-hidden="true">'+out+'</svg>';
+}
+function hash(s){var h=7;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%100000;return h+1;}
+
+/* =========================================================
+   4. Carte 3D
+   ========================================================= */
+function cardHTML(t,stamps,who,w,seedStr){
+  var col=colorOf(t),g=t.card.goal,st="";
+  for(var i=0;i<g;i++){
+    if(i<stamps)st+='<span class="st" style="background:'+col.fill+'"><svg viewBox="0 0 24 24"><path d="M6 12.5 10 16.5 18 8" fill="none" stroke="'+col.mark+'" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+    else if(i===g-1)st+='<span class="st" style="background:#FF5A3C"><svg viewBox="0 0 24 24" fill="none" stroke="#0B1033" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h16v10H4zM12 10v10M3 7h18v3H3zM12 7C10 3 6 4 8 7M12 7c2-4 6-3 4 0"/></svg></span>';
+    else st+='<span class="st" style="border:2px dashed '+col.empty+'"></span>';
+  }
+  var left=Math.max(0,g-stamps),line=stamps>=g?"Récompense prête : "+esc(t.card.reward):"Encore "+left+" passage"+(left>1?"s":"")+" : "+esc(t.card.reward).toLowerCase();
+  var edges="";for(var z=-2;z<=2;z++)edges+='<div class="edge" style="background:'+col.edge+';transform:translateZ('+z+'px)"></div>';
+  return '<div class="tilt-stage" role="button" tabindex="0" aria-label="Carte '+esc(t.name)+', '+stamps+' tampons sur '+g+'. Touche pour la retourner.">'+
+    '<div class="card-float"><div class="card3d" style="--cw:'+(w||330)+'px">'+edges+
+    '<div class="face front" style="background:linear-gradient(135deg,'+col.bg+','+col.bg2+');color:'+col.fg+'"><svg class="deco" viewBox="0 0 200 200" aria-hidden="true"><path d="M160 100 A60 60 0 1 1 130 48" fill="none" stroke="currentColor" stroke-width="26" stroke-linecap="round"/></svg><div class="inner">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div><div class="shop-name">'+esc(t.name)+'</div><div class="kind">Carte fidélité</div></div><span class="mark">c'+BOOM(col.id==="corail"?"#0B1033":"#FF5A3C")+'mbak</span></div>'+
+      '<div class="count num">'+stamps+'<small>/ '+g+' tampons</small></div><div class="stamps">'+st+'</div><div class="reward">'+line+'</div>'+
+    '</div><div class="holo"></div><div class="sheen"></div></div>'+
+    '<div class="face back" style="background:'+col.back+';color:'+col.backFg+'"><div class="inner"><div class="qr">'+qrSVG(hash(seedStr||t.id))+'</div><div><div class="who">'+esc(who||"Ton nom")+'</div><p>Montre ce QR en caisse pour gagner ton tampon.</p><p style="opacity:.75">QR de démonstration</p></div></div></div>'+
+    '</div></div></div>';
+}
+function bindTilt(root){
+  (root||document).querySelectorAll(".tilt-stage").forEach(function(st){
+    if(st.dataset.bound)return;st.dataset.bound="1";
+    var card=st.querySelector(".card3d"),flipped=false;
+    st.addEventListener("pointermove",function(e){var r=st.getBoundingClientRect(),px=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)),py=Math.min(1,Math.max(0,(e.clientY-r.top)/r.height));
+      st.classList.add("active");card.style.setProperty("--ry",((px-.5)*38).toFixed(1)+"deg");card.style.setProperty("--rx",(-(py-.5)*28).toFixed(1)+"deg");card.style.setProperty("--mx",(px*100).toFixed(0)+"%");card.style.setProperty("--my",(py*100).toFixed(0)+"%");card.style.setProperty("--sh",".45");});
+    st.addEventListener("pointerleave",function(){st.classList.remove("active");["--rx","--ry","--mx","--my","--sh"].forEach(function(p){card.style.removeProperty(p);});});
+    function flip(){flipped=!flipped;card.style.setProperty("--flip",flipped?"180deg":"0deg");}
+    st.addEventListener("click",flip);
+    st.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();flip();}});
+  });
+}
+
+/* =========================================================
+   5. Roue
+   ========================================================= */
+var WC=[["#2F5BFF","#FFFFFF"],["#FFD166","#0B1033"],["#0B1033","#FFFFFF"],["#FF6A4D","#0B1033"],["#B9CBFF","#0B1033"]];
+function drawWheel(cv,segs,rot){
+  if(!cv)return;var dpr=window.devicePixelRatio||1,size=cv.clientWidth||260;cv.width=size*dpr;cv.height=size*dpr;
+  var x=cv.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);var c=size/2,R=size/2-4,n=segs.length,a=2*Math.PI/n;
+  x.clearRect(0,0,size,size);x.beginPath();x.arc(c,c,R+2,0,2*Math.PI);x.fillStyle="#0B1033";x.fill();
+  for(var i=0;i<n;i++){var k=WC[i%WC.length];x.beginPath();x.moveTo(c,c);x.arc(c,c,R-2,rot+i*a,rot+(i+1)*a);x.closePath();x.fillStyle=k[0];x.fill();
+    x.save();x.translate(c,c);x.rotate(rot+(i+.5)*a);x.textAlign="right";x.textBaseline="middle";x.fillStyle=k[1];x.font="700 "+Math.max(10,Math.round(size/22))+"px Inter, sans-serif";
+    var l=segs[i].label||"…";if(l.length>18)l=l.slice(0,17)+"…";x.fillText(l,R-14,0);x.restore();}
+  x.beginPath();x.arc(c,c,R*.16,0,2*Math.PI);x.fillStyle="#FFFFFF";x.fill();x.lineWidth=4;x.strokeStyle="#0B1033";x.stroke();
+}
+function pick(segs){var tot=segs.reduce(function(s,x){return s+Math.max(0,+x.w||0);},0)||1,r=Math.random()*tot;for(var i=0;i<segs.length;i++){r-=Math.max(0,+segs[i].w||0);if(r<=0)return i;}return segs.length-1;}
+function spin(cv,segs,ref,done){
+  var n=segs.length,a=2*Math.PI/n,idx=pick(segs),target=-Math.PI/2-(idx+.5)*a,start=ref.v,delta=((target-start)%(2*Math.PI)+2*Math.PI)%(2*Math.PI);
+  var red=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches,end=start+delta+(red?0:10*Math.PI),dur=red?500:4200,t0=null;
+  function step(ts){if(!t0)t0=ts;var p=Math.min(1,(ts-t0)/dur),e=1-Math.pow(1-p,3);ref.v=start+(end-start)*e;drawWheel(cv,segs,ref.v);if(p<1)requestAnimationFrame(step);else done(idx);}
+  requestAnimationFrame(step);
+}
+
+/* =========================================================
+   6. Notifications vers les clients
+   ========================================================= */
+var bannerT;
+function notify(card,title,body){
+  if(!card.consent)return false;
+  DB.notifs.unshift({id:uid("n"),cardId:card.id,title:title,body:body,t:"À l'instant"});
+  var u=me();
+  if(u&&u.role==="customer"&&card.customerUserId===u.id){showBanner(tenant(card.tenantId).name,title,body);}
+  return true;
+}
+function showBanner(shop,title,body){var b=$("banner");b.innerHTML='<span class="app-ico">'+BOOM("#FFFFFF")+'</span><div><b>'+esc(shop)+' · '+esc(title)+'</b><p>'+esc(body)+'</p></div>';b.classList.add("show");clearTimeout(bannerT);bannerT=setTimeout(function(){b.classList.remove("show");},4500);}
+
+function addStamp(card){
+  var t=tenant(card.tenantId);if(card.ready)return;
+  card.stamps++;card.visits++;card.lastDays=0;t.visits++;t.weeks[t.weeks.length-1]++;
+  var g=t.card.goal,left=g-card.stamps;if(card.stamps>=g){card.stamps=g;card.ready=true;}
+  activity(t.id,card.name+" a reçu un tampon ("+card.stamps+"/"+g+")");
+  if(card.ready)notify(card,"Récompense prête","Bravo ! "+t.card.reward+" t'attend. Montre ta carte en caisse.");
+  else if(t.scen.near&&left===2)notify(card,"Presque !","Plus que 2 passages et "+t.card.reward.toLowerCase()+" est pour toi.");
+  else notify(card,"Tampon ajouté","Merci ! Tu en es à "+card.stamps+"/"+g+".");
+  if(t.scen.review&&card.visits===1)notify(card,"Ton avis compte","Ça t'a plu ? Un avis Google nous aide beaucoup. Sans obligation et sans contrepartie.");
+  save();toast("Tampon ajouté pour "+card.name+" · "+card.stamps+"/"+g+(card.customerUserId?" · notification envoyée":""));render();
+}
+function redeem(card){var t=tenant(card.tenantId);card.ready=false;card.stamps=0;t.rewards++;activity(t.id,card.name+" a utilisé sa récompense");notify(card,"Récompense utilisée","Profite bien ! Ta carte repart à zéro.");save();toast("Récompense validée pour "+card.name);render();}
+
+/* =========================================================
+   7. Écrans : connexion / inscription
+   ========================================================= */
+function viewAuth(){
+  var demo=[["admin@combak.fr","Super admin","Toi, le fondateur"],["contact@cafelumiere.fr","Commerçant","Café Lumière"],["equipe@cafelumiere.fr","Vendeur","Café Lumière, scan seul"],["lea@exemple.fr","Cliente","Léa, 2 cartes"]];
+  var side='<div class="auth-side"><div class="glow"></div><div style="position:relative">'+logo(34,"#fff")+'</div><div class="big" style="position:relative;display:flex;flex-direction:column;gap:16px"><h1 style="font-size:46px;letter-spacing:-0.04em">Vos clients reviennent. Tout seuls.</h1><p style="margin:0;color:#C9D5FF;max-width:40ch">Un seul logiciel, quatre types de comptes : toi, tes commerçants, leurs vendeurs et leurs clients. Chacun ne voit que ce qui le concerne.</p></div><p class="small" style="position:relative;margin:0;color:#8FA6F0">Démo : les données restent dans ce navigateur.</p></div>';
+  var box="";
+  if(UI.authMode==="pick"){
+    var picks=[["admin@combak.fr","Super admin","Toi : MRR, commerçants, accès",I.lock,"#0B1033","#FFFFFF"],["contact@cafelumiere.fr","Commerçant","Café Lumière : dashboard complet",I.shop,"#2F5BFF","#FFFFFF"],["equipe@cafelumiere.fr","Vendeur","Café Lumière : scanner seul",I.scan,"#6B4BFF","#FFFFFF"],["lea@exemple.fr","Cliente","Léa : ses cartes et messages",I.wallet,"#FF5A3C","#0B1033"]];
+    var joinBtn='<button type="button" data-join="t1" style="display:flex;align-items:center;gap:14px;border:2px dashed rgba(185,203,255,.5);border-radius:20px;padding:16px;background:transparent;color:#fff;text-align:left;min-height:76px"><span style="width:44px;height:44px;border-radius:14px;background:#FFFFFF;color:#0B1033;display:flex;align-items:center;justify-content:center;flex:none">'+I.scan.replace("<svg",'<svg style="width:22px;height:22px"')+'</span><span><b style="display:block;font-size:18px;font-family:var(--display)">Nouveau client</b><span style="font-size:14px;opacity:.9">Scanne le QR du comptoir et ajoute la carte à ton Wallet</span></span></button>';
+    return '<div style="min-height:100%;background:var(--navy);color:#fff;padding:28px 18px 40px;display:flex;flex-direction:column;gap:22px;align-items:center"><div style="width:100%;max-width:460px;display:flex;flex-direction:column;gap:22px">'+logo(32,"#fff")+
+      '<div><h1 style="font-size:34px;letter-spacing:-0.03em">Choisis une vue</h1><p style="margin:6px 0 0;color:#C9D5FF">Un tap et tu es dedans. Tu pourras changer de vue à tout moment en haut de l\'écran.</p></div>'+
+      '<div style="display:flex;flex-direction:column;gap:12px">'+joinBtn+picks.map(function(p){return '<button type="button" data-demo="'+p[0]+'" style="display:flex;align-items:center;gap:14px;border:0;border-radius:20px;padding:16px;background:'+p[4]+';color:'+p[5]+';text-align:left;min-height:76px;box-shadow:0 10px 26px rgba(0,0,0,.3)"><span style="width:44px;height:44px;border-radius:14px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex:none">'+p[3].replace("<svg",'<svg style="width:22px;height:22px"')+'</span><span><b style="display:block;font-size:18px;font-family:var(--display)">'+p[1]+'</b><span style="font-size:14px;opacity:.9">'+p[2]+'</span></span></button>';}).join("")+'</div>'+
+      '<p class="small" style="margin:0;color:#8FA6F0">Démo : les données restent sur ton téléphone. <button type="button" class="link" data-auth="login" style="color:#B9CBFF">Connexion avec e-mail</button></p></div></div>';
+  }
+  if(UI.authMode==="login"){
+    box='<h2 style="font-size:30px">Connexion</h2>'+
+    '<form id="login-form" novalidate style="display:flex;flex-direction:column;gap:12px"><div class="field"><label for="li-email">E-mail</label><input class="input" id="li-email" type="email" autocomplete="username" required></div><div class="field"><label for="li-pw">Mot de passe</label><input class="input" id="li-pw" type="password" autocomplete="current-password" required></div>'+
+    (UI.authError?'<p class="error" role="alert">'+esc(UI.authError)+'</p>':'')+'<button class="btn btn-primary btn-block" type="submit">Se connecter</button></form>'+
+    '<div><p class="small muted" style="margin:0 0 8px">Comptes de démo (mot de passe : demo) :</p><div class="demo-acc">'+demo.map(function(d){return '<button type="button" data-demo="'+d[0]+'"><b>'+d[1]+'</b><span>'+d[2]+'</span></button>';}).join("")+'</div></div>'+
+    '<p style="margin:0" class="small">Tu as un commerce ? <button type="button" class="link" data-auth="signup">Créer un compte commerçant</button></p>'+
+    '<p style="margin:0" class="small">Tu es client ? <button type="button" class="link" data-auth="customer">Accéder à mes cartes</button></p>';
+  } else if(UI.authMode==="signup"){
+    var s=UI.signup;
+    box='<h2 style="font-size:30px">Créer mon compte commerçant</h2><p class="muted" style="margin:-8px 0 0">14 jours gratuits, sans carte bancaire.</p>'+
+    '<form id="signup-form" novalidate style="display:flex;flex-direction:column;gap:12px">'+
+    '<div class="field"><label for="su-shop">Nom du commerce</label><input class="input" id="su-shop" value="'+esc(s.shop||"")+'" required></div>'+
+    '<div class="field"><label for="su-type">Activité</label><select class="input" id="su-type">'+["Café","Boulangerie","Restaurant","Barbier","Institut de beauté","Fleuriste","Salle de sport","Autre"].map(function(x){return '<option'+(s.type===x?" selected":"")+'>'+x+'</option>';}).join("")+'</select></div>'+
+    '<div class="field"><label for="su-address">Adresse de la boutique</label><input class="input" id="su-address" value="'+esc(s.address||"")+'" placeholder="Sert à l\'alerte de proximité"></div>'+
+    '<div class="field"><label for="su-name">Ton prénom</label><input class="input" id="su-name" autocomplete="given-name" value="'+esc(s.name||"")+'" required></div>'+
+    '<div class="field"><label for="su-email">E-mail</label><input class="input" id="su-email" type="email" autocomplete="email" value="'+esc(s.email||"")+'" required></div>'+
+    '<div class="field"><label for="su-pw">Mot de passe (8 caractères minimum)</label><input class="input" id="su-pw" type="password" autocomplete="new-password" required></div>'+
+    (UI.authError?'<p class="error" role="alert">'+esc(UI.authError)+'</p>':'')+'<button class="btn btn-primary btn-block" type="submit">Créer mon compte</button></form>'+
+    '<p class="small" style="margin:0"><button type="button" class="link" data-auth="login">J\'ai déjà un compte</button></p>';
+  } else {
+    box='<h2 style="font-size:30px">Mes cartes de fidélité</h2><p class="muted" style="margin:-8px 0 0">Pas de mot de passe : reçois un lien de connexion.</p>'+
+    '<form id="magic-form" novalidate style="display:flex;flex-direction:column;gap:12px"><div class="field"><label for="mg-email">E-mail</label><input class="input" id="mg-email" type="email" autocomplete="email" placeholder="lea@exemple.fr" required></div>'+
+    (UI.authError?'<p class="error" role="alert">'+esc(UI.authError)+'</p>':'')+'<button class="btn btn-primary btn-block" type="submit">Recevoir mon lien</button><p class="small muted" style="margin:0">Dans la démo, le lien s\'ouvre directement.</p></form>'+
+    '<p class="small" style="margin:0"><button type="button" class="link" data-auth="login">Retour</button></p>';
+  }
+  return '<div class="auth">'+side+'<div class="auth-main"><div class="auth-box">'+box+'</div></div></div>';
+}
+
+
+function platform(){var ua=navigator.userAgent||"";if(/iPhone|iPad|iPod/i.test(ua))return "apple";if(/Android/i.test(ua))return "google";return "other";}
+var WALLET_NAME={apple:"Apple Wallet",google:"Google Wallet"};
+function walletBtn(kind){return '<button type="button" class="wallet-btn" data-wallet-add="'+kind+'" style="background:'+(kind==="apple"?"#000":"#1F1F1F")+'">'+I.wallet+'Ajouter à '+WALLET_NAME[kind]+'</button>';}
+function viewJoin(){
+  var J=UI.join,t=tenant(J.tid),col=colorOf(t),plat=platform(),h="";
+  var head='<div style="display:flex;align-items:center;gap:12px"><span class="avatar" style="background:linear-gradient(135deg,'+col.bg+','+col.bg2+');color:'+col.fg+'">'+esc(t.name.charAt(0))+'</span><div><b style="display:block;line-height:1.2">'+esc(t.name)+'</b><span class="small muted">'+esc(t.address||"")+'</span></div><button type="button" class="icon-btn" data-auth="pick" aria-label="Retour au choix des vues" style="margin-left:auto">'+I.out+'</button></div>';
+  if(J.step==="form"){
+    h=head+'<p class="small" style="margin:0;color:var(--ink-3)">Tu as scanné le QR du comptoir</p><h1 style="font-size:32px;letter-spacing:-0.03em">Rejoins le programme fidélité</h1>'+
+      '<p class="muted" style="margin:-6px 0 0">'+t.card.goal+' passages = '+esc(t.card.reward.toLowerCase())+'. Ta carte s\'ajoute à ton Wallet, sans appli.</p>'+
+      cardHTML(t,0,J.name||"Ton prénom",320,"join")+
+      '<form id="join-public" novalidate style="display:flex;flex-direction:column;gap:12px"><div class="field"><label for="jp-name">Prénom</label><input class="input" id="jp-name" autocomplete="given-name" value="'+esc(J.name)+'" placeholder="Léa"></div>'+
+      '<div class="field"><label for="jp-contact">Téléphone ou e-mail</label><input class="input" id="jp-contact" autocomplete="email" value="'+esc(J.contact)+'" placeholder="lea@exemple.fr"></div>'+
+      '<label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.4;cursor:pointer"><input type="checkbox" id="jp-consent"'+(J.consent?" checked":"")+' style="width:20px;height:20px;margin-top:1px;accent-color:#2F5BFF;flex:none"><span>J\'accepte de recevoir les offres de '+esc(t.name)+' sur ma carte. Désinscription en un geste.</span></label>'+
+      (J.error?'<p class="error" role="alert">'+esc(J.error)+'</p>':'')+'<button type="submit" class="btn btn-primary btn-block">Créer ma carte</button></form>';
+  } else if(J.step==="wallet"){
+    var order=plat==="google"?["google","apple"]:["apple","google"];
+    h=head+'<h1 style="font-size:30px;letter-spacing:-0.03em">Ta carte est prête, '+esc(J.name)+'</h1>'+cardHTML(t,0,J.name,320,"join")+
+      walletBtn(order[0])+(plat==="other"?walletBtn(order[1]):'<button type="button" class="link" data-wallet-add="'+order[1]+'" style="align-self:center">Plutôt '+WALLET_NAME[order[1]]+'</button>')+
+      '<div class="note small">'+I.info+'<span>'+(plat==="other"?'Sur téléphone, on affiche directement le bon bouton : Apple Wallet sur iPhone, Google Wallet sur Android.':'On a détecté ton '+(plat==="apple"?"iPhone":"Android")+' : le bon Wallet est proposé en premier.')+' Démo : dans la version réelle, ce bouton ouvre le Wallet de ton téléphone.</span></div>';
+  } else {
+    var c=DB.cards.filter(function(x){return x.id===J.cardId;})[0];
+    var spin=(!DB.spun[c.id]&&t.wheel.trigger==="inscription")?'<button type="button" class="prize" data-spin="'+c.id+'">'+I.gift.replace("<svg",'<svg style="width:22px;height:22px;flex:none"')+'<span>Cadeau de bienvenue : un tour de roue offert !</span></button>':(DB.spun[c.id]&&DB.spun[c.id]!=="-"?'<div class="prize">'+I.gift.replace("<svg",'<svg style="width:22px;height:22px;flex:none"')+'<span>Gagné : '+esc(DB.spun[c.id])+'</span></div>':'');
+    h=head+'<div class="note good">'+I.shield+'<span><b>C\'est fait !</b> Ta carte '+esc(t.name)+' est dans ton '+WALLET_NAME[J.wallet]+'.</span></div>'+cardHTML(t,c.stamps,c.name,320,c.id)+spin+
+      '<section class="panel" style="display:flex;flex-direction:column;gap:10px"><h2 style="margin:0;font-size:18px">Et maintenant ?</h2>'+
+      '<div class="row" style="border:0;padding:4px 0">'+I.scan.replace("<svg",'<svg style="width:22px;height:22px;flex:none;color:#2F5BFF"')+'<span class="grow">À chaque passage, montre ta carte en caisse : +1 tampon.</span></div>'+
+      '<div class="row" style="border:0;padding:4px 0">'+I.bell.replace("<svg",'<svg style="width:22px;height:22px;flex:none;color:#2F5BFF"')+'<span class="grow">Tu reçois un message quand ta récompense approche.</span></div>'+
+      '<div class="row" style="border:0;padding:4px 0">'+I.pin.replace("<svg",'<svg style="width:22px;height:22px;flex:none;color:#2F5BFF"')+'<span class="grow">Quand tu passes devant la boutique, la carte s\'affiche sur ton écran verrouillé.</span></div></section>'+
+      '<button type="button" class="btn btn-dark btn-block" data-demo="'+(DB.users.filter(function(u){return u.tenantId===t.id&&u.role==="merchant";})[0]||{}).email+'">Voir côté commerçant : '+esc(t.name)+'</button>'+
+      '<button type="button" class="btn btn-soft btn-block" data-join-again>Refaire le parcours</button>';
+  }
+  return '<div style="min-height:100%;background:var(--bg);padding:20px 16px 40px;display:flex;justify-content:center"><div style="width:100%;max-width:440px;display:flex;flex-direction:column;gap:16px">'+h+'</div></div>';
+}
+function openWalletSheet(kind){
+  var J=UI.join,t=tenant(J.tid);
+  modal('<p class="small muted" style="margin:0;text-align:center">'+WALLET_NAME[kind]+' · aperçu de démonstration</p><h2 style="text-align:center">Ajouter cette carte ?</h2>'+cardHTML(t,0,J.name,300,"join")+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button type="button" class="btn btn-soft" data-close-sheet>Annuler</button><button type="button" class="btn btn-primary" data-confirm-wallet="'+kind+'">Ajouter</button></div>');
+  bindTilt($("modal"));
+}
+
+/* =========================================================
+   8. Shell et navigation selon le rôle
+   ========================================================= */
+var NAV={
+  superadmin:[["overview","Vue d'ensemble",I.home],["tenants","Commerçants",I.shop],["roles","Rôles et accès",I.lock]],
+  merchant:[["home","Accueil",I.home],["card","Ma carte",I.card],["scan","Scanner",I.scan],["customers","Clients",I.users],["notifs","Notifications",I.bell],["wheel","Roue",I.wheel],["team","Équipe",I.team],["billing","Abonnement",I.bill]],
+  staff:[["scan","Scanner",I.scan]],
+  customer:[["mycards","Mes cartes",I.wallet],["inbox","Messages",I.bell],["account","Mon compte",I.user]]
+};
+var ROLE_LABEL={superadmin:"Super admin",merchant:"Commerçant",staff:"Vendeur",customer:"Client"};
+function viewShell(){
+  var u=me(),t=myTenant(),nav=NAV[u.role];
+  if(!UI.tab||!nav.some(function(n){return n[0]===UI.tab;}))UI.tab=nav[0][0];
+  var side='<nav class="sidenav" aria-label="Menu">';
+  if(t){var col=colorOf(t);side+='<div class="tenant"><span class="avatar" style="background:'+col.bg+';color:'+col.fg+'">'+esc(t.name.charAt(0))+'</span><div><b style="display:block;line-height:1.2">'+esc(t.name)+'</b><span class="small muted">'+t.shops+' boutique'+(t.shops>1?'s':'')+' · '+priceTxt(t)+'</span></div></div>';}
+  nav.forEach(function(n){side+='<button type="button" class="nav-btn" data-tab="'+n[0]+'"'+(UI.tab===n[0]?' aria-current="page"':'')+'>'+n[2]+'<span>'+n[1]+'</span></button>';});
+  side+='</nav>';
+  var blocked=t&&t.status==="suspendu";
+  var body=blocked?'<div class="note warn">'+I.lock+'<span><b>Compte suspendu.</b> Ce commerce n\'a plus accès à son espace. Les cartes de ses clients restent dans leur Wallet, mais plus aucun tampon ni notification. Contacte le support pour réactiver.</span></div>':VIEWS[UI.tab]();
+  var quick=[["admin@combak.fr","Admin"],["contact@cafelumiere.fr","Commerçant"],["equipe@cafelumiere.fr","Vendeur"],["lea@exemple.fr","Cliente"]];
+  var mid=t?'<span class="mob-id"><span class="avatar" style="width:34px;height:34px;font-size:16px;border-radius:10px;background:'+colorOf(t).bg+';color:'+colorOf(t).fg+'">'+esc(t.name.charAt(0))+'</span><span><b>'+esc(t.name)+'</b><small>'+ROLE_LABEL[u.role]+'</small></span></span>':'<span class="mob-id">'+logo(24)+'</span>';
+  var PRIMARY={merchant:["home","customers","scan","notifs"],customer:["mycards","inbox","account"],superadmin:["overview","tenants","roles"],staff:[]}[u.role];
+  var more=nav.filter(function(n){return PRIMARY.indexOf(n[0])<0;});
+  var moreOn=more.some(function(n){return n[0]===UI.tab;});
+  var bnav=PRIMARY.length?'<nav class="bnav" aria-label="Menu principal">'+PRIMARY.map(function(k){var n=nav.filter(function(x){return x[0]===k;})[0];return '<button type="button" class="bn'+(k==="scan"?" bn-scan":"")+'" data-tab="'+k+'"'+(UI.tab===k?' aria-current="page"':'')+'>'+n[2]+'<span>'+n[1]+'</span></button>';}).join("")+
+    (more.length?'<button type="button" class="bn" data-more'+(moreOn?' aria-current="page"':'')+'>'+I.dots+'<span>Plus</span></button>':'')+'</nav>':'';
+  return '<header class="topbar" style="flex-wrap:nowrap;gap:10px"><span class="desk-logo">'+logo(24)+'</span>'+mid+
+    '<div class="seg-views" role="group" aria-label="Changer de vue" style="gap:6px;margin-left:auto">'+quick.map(function(q){var on=u.email===q[0];return '<button type="button" data-demo="'+q[0]+'" aria-pressed="'+on+'" style="border:0;border-radius:999px;padding:8px 10px;min-height:38px;font-weight:700;font-size:13px;white-space:nowrap;background:'+(on?"var(--ink)":"var(--soft)")+';color:'+(on?"#fff":"var(--ink)")+'">'+q[1]+'</button>';}).join("")+'</div>'+
+    '<button type="button" class="view-btn" data-viewsheet aria-label="Changer de vue (démo)"><span class="role '+u.role+'">'+ROLE_LABEL[u.role]+'</span>'+I.chev+'</button>'+
+    '<button type="button" class="icon-btn desk-only" data-logout aria-label="Retour au choix des vues" style="width:38px;height:38px;flex:none">'+I.out+'</button></header>'+
+    '<div class="layout'+(bnav?' has-bnav':'')+'">'+side+'<main class="main" id="main">'+body+'</main></div>'+bnav;
+}
+
+/* =========================================================
+   9. Vues super admin
+   ========================================================= */
+function mrr(){return DB.tenants.filter(function(t){return t.status==="actif";}).reduce(function(s,t){return s+(monthly(t)||0);},0);}
+function vOverview(){
+  var act=DB.tenants.filter(function(t){return t.status==="actif";}).length,trial=DB.tenants.filter(function(t){return t.status==="essai";}).length;
+  return '<div class="page-head"><div><h1>Vue d\'ensemble</h1><p>La santé de Combak. Tu vois les commerces et leurs chiffres, jamais les données personnelles de leurs clients.</p></div></div>'+
+  '<div class="grid-kpi"><div class="kpi"><span class="v num">'+mrr()+' €</span><span class="l">MRR (abonnements actifs, HT)</span></div><div class="kpi"><span class="v num">'+act+'</span><span class="l">Commerces actifs</span></div><div class="kpi"><span class="v num">'+trial+'</span><span class="l">En essai gratuit</span></div><div class="kpi"><span class="v num">'+DB.cards.length+'</span><span class="l">Cartes dans les Wallets</span></div></div>'+
+  '<section class="panel"><h2>Derniers commerces</h2><div class="list">'+DB.tenants.slice().reverse().slice(0,5).map(function(t){return '<div class="row"><div class="grow"><b>'+esc(t.name)+'</b><div class="small muted">'+esc(t.type)+' · '+esc(t.address||"Adresse non renseignée")+'</div></div>'+stChip(t)+'<span class="chip info">'+t.shops+' boutique'+(t.shops>1?'s':'')+'</span></div>';}).join("")+'</div></section>';
+}
+function stChip(t){return t.status==="actif"?'<span class="chip good">Actif</span>':t.status==="essai"?'<span class="chip warn">Essai · '+t.daysLeft+' j</span>':'<span class="chip bad">Suspendu</span>';}
+function vTenants(){
+  return '<div class="page-head"><div><h1>Commerçants</h1><p>Chaque commerce est un espace étanche. Tu gères l\'abonnement et l\'accès, pas leur fichier client.</p></div></div>'+
+  '<section class="panel"><div class="table-wrap"><table class="m-cards m-ten"><thead><tr><th scope="col">Commerce</th><th scope="col">Boutiques</th><th scope="col">Statut</th><th scope="col">Cartes</th><th scope="col">MRR</th><th scope="col">Actions</th></tr></thead><tbody>'+
+  DB.tenants.map(function(t){var n=tenantCards(t.id).length;return '<tr><td class="t-name"><b>'+esc(t.name)+'</b><div class="small muted">'+esc(t.type)+'</div></td><td class="t-shops" data-l="Boutiques"><label class="sr" for="pl-'+t.id+'">Nombre de boutiques de '+esc(t.name)+'</label><input class="input num" type="number" min="1" max="50" id="pl-'+t.id+'" data-shops="'+t.id+'" value="'+t.shops+'" style="min-height:38px;padding:6px 8px;width:80px"></td><td class="t-status">'+stChip(t)+'</td><td class="num t-cards" data-l="Cartes">'+n+'</td><td class="num t-mrr" data-l="MRR">'+(t.status==="actif"?priceTxt(t):"0 €")+'</td><td class="t-act">'+(t.status==="suspendu"?'<button type="button" class="btn btn-soft btn-sm" data-tstatus="'+t.id+'" data-to="actif">Réactiver</button>':'<button type="button" class="btn btn-danger btn-sm" data-tstatus="'+t.id+'" data-to="suspendu">Suspendre</button>')+'</td></tr>';}).join("")+
+  '</tbody></table></div></section>';
+}
+function vRoles(){
+  var rows=[["Voir le MRR et la liste des commerces",1,0,0,0],["Suspendre ou réactiver un commerce",1,0,0,0],["Personnaliser sa carte et la roue",0,1,0,0],["Voir le fichier client de son commerce",0,1,0,0],["Envoyer des notifications",0,1,0,0],["Inviter des vendeurs",0,1,0,0],["Gérer son abonnement",0,1,0,0],["Scanner et ajouter un tampon",0,1,1,0],["Voir le fichier client d'un autre commerce",0,0,0,0],["Voir ses propres cartes et messages",0,0,0,1],["Exporter ou supprimer ses données",0,0,0,1]];
+  function cell(v){return v?'<td class="yes" style="text-align:center">Oui</td>':'<td class="no" style="text-align:center">Non</td>';}
+  return '<div class="page-head"><div><h1>Rôles et accès</h1><p>Quatre types de comptes, chacun enfermé dans son périmètre. Dans le vrai SaaS, ces règles sont appliquées par la base de données elle-même.</p></div></div>'+
+  '<section class="panel"><div class="table-wrap"><table><thead><tr><th scope="col">Action</th><th scope="col" style="text-align:center">Super admin</th><th scope="col" style="text-align:center">Commerçant</th><th scope="col" style="text-align:center">Vendeur</th><th scope="col" style="text-align:center">Client</th></tr></thead><tbody>'+
+  rows.map(function(r){return '<tr><th scope="row" style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);font-weight:600">'+r[0]+'</th>'+cell(r[1])+cell(r[2])+cell(r[3])+cell(r[4])+'</tr>';}).join("")+'</tbody></table></div></section>'+
+  '<div class="note">'+I.shield+'<span>Même toi, en super admin, tu ne lis pas les noms et contacts des clients d\'un commerce. C\'est plus sûr pour le RGPD et c\'est un argument de vente.</span></div>';
+}
+
+/* =========================================================
+   10. Vues commerçant
+   ========================================================= */
+function chart(t){
+  var w=560,h=200,pl=34,pb=26,max=Math.max(80,Math.ceil(Math.max.apply(null,t.weeks)/20)*20),n=t.weeks.length,bw=(w-pl-10)/n,step=max/4;
+  var s='<svg viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Passages par semaine sur 8 semaines, dernière semaine '+t.weeks[n-1]+'">';
+  for(var k=0;k<=4;k++){var v=k*step,y=h-pb-(v/max)*(h-pb-12);s+='<line x1="'+pl+'" x2="'+w+'" y1="'+y+'" y2="'+y+'" stroke="#DCE3FA"/><text x="'+(pl-8)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="#5F6890" font-family="Inter">'+v+'</text>';}
+  t.weeks.forEach(function(v,i){var bh=(v/max)*(h-pb-12),x=pl+6+i*bw,y=h-pb-bh,last=i===n-1;s+='<rect x="'+x+'" y="'+y+'" width="'+(bw-12)+'" height="'+Math.max(bh,0)+'" rx="6" fill="'+(last?"#2F5BFF":"#B9CBFF")+'"/><text x="'+(x+(bw-12)/2)+'" y="'+(h-8)+'" text-anchor="middle" font-size="11" fill="#5F6890" font-family="Inter">S'+(i+1)+'</text>'+(last?'<text x="'+(x+(bw-12)/2)+'" y="'+(y-6)+'" text-anchor="middle" font-size="12" font-weight="700" fill="#0B1033" font-family="Inter">'+v+'</text>':'');});
+  return s+'</svg>';
+}
+function vHome(){
+  var t=myTenant(),cards=tenantCards(t.id),rel=cards.filter(function(c){return c.lastDays>30;}).length;
+  var trial=t.status==="essai"?'<div class="note warn">'+I.info+'<span>Essai gratuit : il te reste <b>'+t.daysLeft+' jours</b>. <button type="button" class="link" data-tab="billing">Voir mon abonnement</button></span></div>':'';
+  return trial+'<div class="page-head"><div><h1>Bonjour '+esc(me().name)+'</h1><p>Voici comment les clients de '+esc(t.name)+' reviennent.</p></div><button type="button" class="btn btn-primary" data-tab="scan">'+I.scan+'Scanner un client</button></div>'+
+  '<div class="grid-kpi"><div class="kpi"><span class="v num">'+cards.length+'</span><span class="l">Clients inscrits</span></div><div class="kpi"><span class="v num">'+t.visits+'</span><span class="l">Passages ce mois-ci</span></div><div class="kpi"><span class="v num">'+t.rewards+'</span><span class="l">Récompenses offertes</span></div><div class="kpi"><span class="v num">'+rel+'</span><span class="l">Clients à relancer</span></div></div>'+
+  '<div class="grid-2"><section class="panel chart"><h2>Passages par semaine</h2>'+chart(t)+'</section><section class="panel"><h2>Activité récente</h2><div class="list">'+((DB.activity[t.id]||[]).map(function(a){return '<div class="row"><div class="grow">'+esc(a.txt)+'</div><span class="small muted">'+esc(a.t)+'</span></div>';}).join("")||'<p class="muted" style="margin:0">Rien pour l\'instant. Scanne ton premier client !</p>')+'</div></section></div>';
+}
+function vCard(){
+  var t=myTenant(),p={geo:Math.min(10,t.shops)};
+  var sw=COLORS.map(function(c){return '<label class="swatch" title="'+c.name+'"><input type="radio" name="card-color" value="'+c.id+'"'+(t.card.color===c.id?" checked":"")+' aria-label="'+c.name+'"><span style="background:linear-gradient(135deg,'+c.bg+','+c.bg2+')"></span></label>';}).join("");
+  return '<div class="page-head"><div><h1>Ma carte</h1><p>Les cartes déjà dans le Wallet de tes clients se mettent à jour, sans rien réimprimer.</p></div></div>'+
+  '<div class="grid-2 card-grid"><section class="panel" style="display:flex;flex-direction:column;gap:16px">'+
+    '<div class="field"><label for="c-name">Nom affiché</label><input class="input" id="c-name" maxlength="28" value="'+esc(t.name)+'"></div>'+
+    '<div class="field"><label for="c-reward">Récompense</label><input class="input" id="c-reward" maxlength="34" value="'+esc(t.card.reward)+'"></div>'+
+    '<div class="field"><label for="c-goal">Nombre de tampons : <span id="goal-out" class="num">'+t.card.goal+'</span></label><input type="range" id="c-goal" min="5" max="12" value="'+t.card.goal+'" style="accent-color:#2F5BFF;min-height:32px"></div>'+
+    '<fieldset class="field" style="border:0;padding:0;margin:0"><legend style="margin-bottom:8px">Couleur</legend><div class="swatches">'+sw+'</div></fieldset>'+
+    '<h2 style="margin:8px 0 0;font-size:18px">QR du comptoir</h2>'+
+    '<div class="row" style="border:0;padding:0;align-items:center"><div style="width:96px;height:96px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px;flex:none">'+qrSVG(hash("qr"+t.id)).replace('<svg','<svg style="width:100%;height:100%"')+'</div><div class="grow" style="display:flex;flex-direction:column;gap:8px"><span class="small muted">Tes clients le scannent pour ajouter ta carte à leur Wallet. À imprimer en affiche ou en chevalet.</span><button type="button" class="btn btn-soft btn-sm" data-join="'+t.id+'" style="align-self:flex-start">'+I.scan+'Tester le parcours client</button></div></div>'+
+    '<h2 style="margin:8px 0 0;font-size:18px">Alerte de proximité</h2>'+
+    '<div class="row" style="border:0;padding:0"><div class="grow"><b>Afficher la carte quand un client passe devant</b><div class="small muted">'+p.geo+' adresse'+(p.geo>1?'s':'')+' (une par boutique, 10 au maximum)</div></div><label class="toggle"><input type="checkbox" id="c-geo"'+(t.geoOn?" checked":"")+' aria-label="Alerte de proximité"><span></span></label></div>'+
+    '<div class="field"><label for="c-address">Adresse</label><input class="input" id="c-address" value="'+esc(t.address||"")+'"></div>'+
+    '<div class="field"><label for="c-geotext">Message affiché sur iPhone</label><input class="input" id="c-geotext" maxlength="60" value="'+esc(t.geoText)+'"></div>'+
+    '<div class="note small">'+I.info+'<span>Sur iPhone, ton message s\'affiche sur l\'écran verrouillé. Sur Android, Google Wallet montre la carte elle-même. Le client doit avoir autorisé la localisation pour son Wallet.</span></div>'+
+  '</section><section class="panel" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#070B24;border-color:#070B24"><div id="card-preview" style="width:100%"></div><p class="small" style="color:#C9D5FF;margin:0;text-align:center">Glisse dessus pour la faire pivoter, touche pour la retourner.</p></section></div>';
+}
+function scanRows(t){
+  var f=UI.scanFilter.trim().toLowerCase(),g=t.card.goal;
+  return tenantCards(t.id).filter(function(c){return !f||c.name.toLowerCase().indexOf(f)>-1;}).map(function(c){
+    var act=c.ready?'<button type="button" class="btn btn-dark btn-sm" data-redeem="'+c.id+'">'+I.gift+'Valider la récompense</button>':'<button type="button" class="btn btn-primary btn-sm" data-stamp="'+c.id+'">+1 tampon</button>';
+    return '<div class="row"><div class="grow"><b>'+esc(c.name)+'</b>'+(c.customerUserId?' <span class="chip coral">A un compte client</span>':'')+'<div class="bar" style="margin-top:6px;max-width:240px"><span style="width:'+Math.round(c.stamps/g*100)+'%"></span></div></div><span class="num small muted">'+c.stamps+'/'+g+'</span>'+act+'</div>';
+  }).join("")||'<p class="muted">Aucun client ne correspond.</p>';
+}
+function vScan(){
+  var t=myTenant();
+  return '<div class="page-head"><div><h1>Scanner</h1><p>'+(me().role==="staff"?'Ton accès vendeur sert uniquement à scanner. Les réglages et le fichier client restent chez le gérant.':'En caisse, scanne le QR de la carte avec ton téléphone ou ta tablette.')+' Dans la démo, choisis le client dans la liste.</p></div></div>'+
+  '<div class="grid-2"><div class="viewfinder" aria-hidden="true"><div class="frame"><i></i><i></i><i></i><i></i></div><div class="line"></div><span class="label">Caméra simulée</span></div>'+
+  '<section class="panel"><div class="note small" style="margin-bottom:12px">'+I.info+'<span>Astuce : ajoute un tampon à Léa, puis change de compte (en haut) pour voir sa notification côté cliente.</span></div><div class="field" style="margin-bottom:6px"><label for="scan-search">Chercher un client</label><input class="input" id="scan-search" placeholder="Prénom…" value="'+esc(UI.scanFilter)+'"></div><div class="list" id="scan-list">'+scanRows(t)+'</div></section></div>';
+}
+function custRows(t){
+  var f=UI.clientFilter.trim().toLowerCase(),g=t.card.goal;
+  return tenantCards(t.id).filter(function(c){return !f||c.name.toLowerCase().indexOf(f)>-1;}).map(function(c){var s=statusOf(c);
+    return '<tr><td class="c-name"><b>'+esc(c.name)+'</b></td><td class="c-stamps"><div style="display:flex;align-items:center;gap:10px"><div class="bar" style="width:90px"><span style="width:'+Math.round(c.stamps/g*100)+'%"></span></div><span class="num small">'+c.stamps+'/'+g+'</span></div></td><td class="num c-visits" data-l="Passages">'+c.visits+'</td><td class="c-last" data-l="Dernière visite">'+lastTxt(c.lastDays)+'</td><td class="c-status"><span class="chip '+s.cls+'">'+s.txt+'</span>'+(c.ready?' <span class="chip coral">Récompense prête</span>':'')+'</td><td class="c-notif" data-l="Notifications">'+(c.consent?'<span class="yes">Oui</span>':'<span class="no">Non</span>')+'</td><td class="c-wallet" data-l="Wallet">'+(c.wallet?'<span class="chip info">'+WALLET_NAME[c.wallet]+'</span>':'<span class="no">Pas encore</span>')+'</td></tr>';}).join("");
+}
+function vCustomers(){
+  var t=myTenant();
+  return '<div class="page-head"><div><h1>Clients</h1><p>Ton fichier client, uniquement le tien. Aucun autre commerce ne peut le voir.</p></div></div>'+
+  '<section class="panel"><div class="field" style="max-width:320px;margin-bottom:12px"><label for="client-search">Chercher</label><input class="input" id="client-search" placeholder="Prénom…" value="'+esc(UI.clientFilter)+'"></div><div class="table-wrap"><table class="m-cards m-cust"><thead><tr><th scope="col">Client</th><th scope="col">Tampons</th><th scope="col">Passages</th><th scope="col">Dernière visite</th><th scope="col">Statut</th><th scope="col">Notifs</th><th scope="col">Wallet</th></tr></thead><tbody id="client-body">'+custRows(t)+'</tbody></table></div></section>';
+}
+var SCEN=[["welcome","Bienvenue","Juste après l'inscription."],["near","Récompense proche","Quand il ne reste que 2 passages."],["miss","Tu nous manques","Après 30 jours sans visite."],["birthday","Anniversaire","Le jour J."],["review","Demande d'avis Google","Après la 1re visite, sans contrepartie."]];
+function vNotifs(){
+  var t=myTenant(),camp=DB.campaigns.filter(function(c){return c.tenantId===t.id;});
+  return '<div class="page-head"><div><h1>Notifications</h1><p>Elles arrivent sur l\'écran verrouillé de tes clients, depuis leur carte Wallet. Illimitées.</p></div></div>'+
+  '<div class="grid-2"><section class="panel" style="display:flex;flex-direction:column;gap:14px"><h2 style="margin:0">Envoyer un message</h2>'+
+  '<div class="field"><label for="n-msg">Message</label><textarea class="input" id="n-msg" maxlength="140">Ce week-end, ta 2e boisson est offerte. On t\'attend !</textarea></div>'+
+  '<div class="field"><label for="n-target">Destinataires</label><select class="input" id="n-target"><option value="all">Tous mes clients</option><option value="near">Proches d\'une récompense</option><option value="miss">À relancer (plus de 30 jours)</option></select></div>'+
+  '<button type="button" class="btn btn-primary" id="n-send">'+I.bell+'Envoyer maintenant</button>'+
+  '<h2 style="font-size:16px;margin:8px 0 0">Historique</h2><div class="list">'+(camp.map(function(c){return '<div class="row"><div class="grow">'+esc(c.msg)+'</div><span class="chip info">'+c.n+' client'+(c.n>1?"s":"")+'</span></div>';}).join("")||'<p class="small muted" style="margin:0">Aucune campagne pour l\'instant.</p>')+'</div></section>'+
+  '<section class="panel"><h2>Relances automatiques</h2><div class="list">'+SCEN.map(function(s){return '<div class="row"><div class="grow"><b>'+s[1]+'</b><div class="small muted">'+s[2]+'</div></div><label class="toggle"><input type="checkbox" data-scen="'+s[0]+'"'+(t.scen[s[0]]?" checked":"")+' aria-label="'+s[1]+'"><span></span></label></div>';}).join("")+'</div></section></div>';
+}
+var prevRot={v:0};
+function vWheel(){
+  var t=myTenant(),segs=t.wheel.segments,tot=segs.reduce(function(s,x){return s+Math.max(0,+x.w||0);},0)||1;
+  var rows=segs.map(function(s,i){return '<div class="seg-row"><span class="dot" style="background:'+WC[i%WC.length][0]+'"></span><label class="sr" for="sl-'+i+'">Lot '+(i+1)+'</label><input class="input" id="sl-'+i+'" data-seg-l="'+i+'" maxlength="26" value="'+esc(s.label)+'"><div style="display:flex;align-items:center;gap:4px"><label class="sr" for="sw-'+i+'">Poids du lot '+(i+1)+'</label><input class="input num" id="sw-'+i+'" data-seg-w="'+i+'" type="number" min="0" max="100" value="'+s.w+'" style="padding:10px 8px"><span class="small muted num" id="sp-'+i+'" style="min-width:34px">'+Math.round(Math.max(0,+s.w||0)/tot*100)+'%</span></div><button type="button" class="icon-btn" data-seg-del="'+i+'" aria-label="Supprimer le lot '+(i+1)+'"'+(segs.length<=2?" disabled":"")+'>'+I.trash+'</button></div>';}).join("");
+  var trig=[["inscription","À l'inscription"],["instagram","Suivre sur Instagram"],["parrainage","Parrainer un ami"]].map(function(x){return '<label class="row" style="cursor:pointer"><input type="radio" name="w-trig" value="'+x[0]+'"'+(t.wheel.trigger===x[0]?" checked":"")+' style="width:20px;height:20px;accent-color:#2F5BFF"><span class="grow"><b>'+x[1]+'</b></span></label>';}).join("");
+  var locked=false;
+  return '<div class="page-head"><div><h1>La roue</h1><p>Un jeu qui fait revenir, conforme Google et loi française.</p></div></div>'+
+  (locked?'<div class="note warn">'+I.lock+'<span>La roue est incluse à partir de la formule Pro. <button type="button" class="link" data-tab="billing">Voir les formules</button></span></div>':'')+
+  '<div class="note good">'+I.shield+'<span>Le tour de roue ne s\'obtient jamais en échange d\'un avis. La demande d\'avis arrive après, sans condition.</span></div>'+
+  '<div class="grid-2"><section class="panel" style="display:flex;flex-direction:column;gap:12px"><h2 style="margin:0">Lots</h2><div style="display:flex;flex-direction:column;gap:10px">'+rows+'</div><button type="button" class="btn btn-soft btn-sm" id="seg-add" style="align-self:flex-start"'+(segs.length>=8?" disabled":"")+'>'+I.plus+'Ajouter un lot</button><h2 style="margin:10px 0 0">Comment on gagne un tour</h2><div class="list">'+trig+'</div></section>'+
+  '<section class="panel" style="display:flex;flex-direction:column;align-items:center;gap:14px"><h2 style="align-self:flex-start;margin:0">Aperçu</h2><div class="wheel-wrap"><canvas id="wheel-prev" aria-label="Aperçu de la roue"></canvas><span class="wheel-pin" aria-hidden="true"></span></div><button type="button" class="btn btn-dark" id="wheel-test">Tester</button><p class="small muted" id="wheel-out" role="status" style="margin:0;min-height:1.5em"></p></section></div>';
+}
+function vTeam(){
+  var t=myTenant(),staff=DB.users.filter(function(u){return u.tenantId===t.id;});
+  return '<div class="page-head"><div><h1>Équipe</h1><p>Donne à tes vendeurs un accès pour scanner, sans qu\'ils voient tes réglages ni ton fichier client.</p></div></div>'+
+  '<div class="grid-2"><section class="panel"><h2>Accès</h2><div class="list">'+staff.map(function(u){return '<div class="row"><div class="grow"><b>'+esc(u.name)+'</b><div class="small muted">'+esc(u.email)+'</div></div><span class="role '+u.role+'">'+ROLE_LABEL[u.role]+'</span>'+(u.role==="staff"?'<button type="button" class="icon-btn" data-staff-del="'+u.id+'" aria-label="Retirer l\'accès de '+esc(u.name)+'">'+I.trash+'</button>':'')+'</div>';}).join("")+'</div></section>'+
+  '<section class="panel"><h2>Inviter un vendeur</h2><form id="invite-form" novalidate style="display:flex;flex-direction:column;gap:12px"><div class="field"><label for="inv-name">Prénom</label><input class="input" id="inv-name" required></div><div class="field"><label for="inv-email">E-mail</label><input class="input" id="inv-email" type="email" required></div><p class="error" id="inv-err" role="alert" style="min-height:0"></p><button type="submit" class="btn btn-primary">Envoyer l\'invitation</button><p class="small muted" style="margin:0">Démo : le compte est créé avec le mot de passe « demo ».</p></form></section></div>';
+}
+function vBilling(){
+  var t=myTenant(),n=t.shops,u=unitPrice(n),tiers=[["1 boutique","49 €"],["2 à 4 boutiques","39 € chacune"],["5 à 9 boutiques","34 € chacune"],["10 et plus","Sur devis"]],ti=n>=10?3:n>=5?2:n>=2?1:0;
+  return '<div class="page-head"><div><h1>Abonnement</h1><p>Une seule offre, tout compris. Un prix par boutique, moins cher dès la 2e. Sans engagement.</p></div>'+stChip(t)+'</div>'+
+  '<div class="grid-2"><section class="panel" style="display:flex;flex-direction:column;gap:16px;border:2px solid #2F5BFF"><h2 style="margin:0">Combak · tout compris</h2>'+
+    '<div class="field"><label for="b-shops">Nombre de boutiques</label><div style="display:flex;align-items:center;gap:10px"><button type="button" class="icon-btn" data-shops-step="-1" aria-label="Une boutique de moins"'+(n<=1?" disabled":"")+'>−</button><input class="input num" id="b-shops" type="number" min="1" max="50" value="'+n+'" style="width:90px;text-align:center;font-weight:700"><button type="button" class="icon-btn" data-shops-step="1" aria-label="Une boutique de plus">+</button></div></div>'+
+    '<div><span style="font-family:var(--display);font-weight:800;font-size:52px;letter-spacing:-0.04em" class="num">'+(u===null?"Sur devis":(u*n)+" €")+'</span>'+(u===null?'':' <span class="muted">HT / mois</span>')+'<div class="small muted">'+(u===null?"Tarif réseau personnalisé":"soit "+u+" € par boutique · "+n+" boutique"+(n>1?"s":""))+'</div></div>'+
+    '<ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px"><li>Carte Apple Wallet et Google Wallet</li><li>Clients et notifications illimités</li><li>Alerte de proximité, une adresse par boutique</li><li>Roue, parrainage, relances automatiques</li><li>Accès équipe et statistiques par boutique</li></ul>'+
+    (t.status==="essai"?'<button type="button" class="btn btn-primary" data-activate>Activer mon abonnement</button>':'<span class="chip good" style="align-self:flex-start">Abonnement actif</span>')+'</section>'+
+  '<section class="panel"><h2>Prix par boutique</h2><div class="list">'+tiers.map(function(r,i){return '<div class="row" style="'+(i===ti?"background:var(--soft);border-radius:12px;padding:12px;font-weight:700":"")+'"><span class="grow">'+r[0]+'</span><span>'+r[1]+'</span></div>';}).join("")+'</div><p class="small muted" style="margin:12px 0 0">Dès 2 boutiques, toutes passent au tarif réduit. Option annuelle : 2 mois offerts.</p></section></div>'+
+  '<div class="note">'+I.info+'<span>Dans le vrai SaaS, le paiement passe par Stripe (carte, SEPA) avec factures automatiques et la quantité de boutiques sur l\'abonnement. Ici, le changement est immédiat et gratuit.</span></div>';
+}
+
+/* =========================================================
+   11. Vues client final
+   ========================================================= */
+function vMyCards(){
+  var cards=myCustomerCards();
+  var html='<div class="page-head"><div><h1>Mes cartes</h1><p>Toutes tes cartes de fidélité Combak, au même endroit.</p></div><button type="button" class="btn btn-primary" id="join-open">'+I.plus+'Rejoindre un commerce</button></div>';
+  if(!cards.length)return html+'<section class="panel"><p class="muted" style="margin:0">Tu n\'as pas encore de carte. Scanne le QR posé sur le comptoir d\'un commerce Combak.</p></section>';
+  html+='<div class="cards-grid">'+cards.map(function(c){var t=tenant(c.tenantId);var spun=DB.spun[c.id];
+    var wheel=(!spun&&t.status!=="suspendu")?'<button type="button" class="prize" data-spin="'+c.id+'">'+I.gift.replace("<svg",'<svg style="width:22px;height:22px;flex:none"')+'<span>'+(t.wheel.trigger==="inscription"?"Un tour de roue offert pour ton inscription":t.wheel.trigger==="instagram"?"Suis "+esc(t.name)+" sur Instagram et tourne la roue (démo)":"Ton ami s'est inscrit : tourne la roue (démo)")+'</span></button>':(spun&&spun!=="-"?'<div class="prize">'+I.gift.replace("<svg",'<svg style="width:22px;height:22px;flex:none"')+'<span>Gagné : '+esc(spun)+'</span></div>':'');
+    return '<section class="panel" style="display:flex;flex-direction:column;gap:12px">'+cardHTML(t,c.stamps,me().name,300,c.id)+'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b>'+esc(t.name)+'</b><span class="small muted">Membre depuis '+esc(c.joined)+'</span></div>'+(c.wallet?'<span class="chip good" style="align-self:flex-start">'+I.wallet.replace("<svg",'<svg style="width:14px;height:14px"')+'Dans ton '+WALLET_NAME[c.wallet]+'</span>':'')+wheel+
+      (t.geoOn&&t.status!=="suspendu"?'<button type="button" class="btn btn-soft btn-sm" data-geo="'+c.id+'">'+I.pin+'Simuler : je passe devant</button>':'')+'</section>';}).join("")+'</div>';
+  return html;
+}
+function vInbox(){
+  var ids=myCustomerCards().map(function(c){return c.id;}),list=DB.notifs.filter(function(n){return ids.indexOf(n.cardId)>-1;});
+  return '<div class="page-head"><div><h1>Messages</h1><p>Les notifications reçues sur tes cartes.</p></div></div><section class="panel" style="display:flex;flex-direction:column;gap:10px">'+(list.map(function(n){var c=DB.cards.filter(function(k){return k.id===n.cardId;})[0];return '<div class="msg"><div class="t">'+esc(tenant(c.tenantId).name)+' · '+esc(n.title)+' · '+esc(n.t)+'</div>'+esc(n.body)+'</div>';}).join("")||'<p class="muted" style="margin:0">Aucun message.</p>')+'</section>';
+}
+function vAccount(){
+  var u=me(),cards=myCustomerCards();
+  return '<div class="page-head"><div><h1>Mon compte</h1><p>Tes données t\'appartiennent. Tu décides qui peut t\'écrire.</p></div></div>'+
+  '<div class="grid-2"><section class="panel"><h2>Notifications par commerce</h2><div class="list">'+cards.map(function(c){return '<div class="row"><div class="grow"><b>'+esc(tenant(c.tenantId).name)+'</b><div class="small muted">Offres et rappels</div></div><label class="toggle"><input type="checkbox" data-consent="'+c.id+'"'+(c.consent?" checked":"")+' aria-label="Notifications de '+esc(tenant(c.tenantId).name)+'"><span></span></label></div>';}).join("")+'</div></section>'+
+  '<section class="panel" style="display:flex;flex-direction:column;gap:12px"><h2 style="margin:0">Mes données (RGPD)</h2><p class="muted" style="margin:0">'+esc(u.email)+'</p><button type="button" class="btn btn-soft" id="export">Copier mes données</button><button type="button" class="btn btn-danger" id="delete-acc">Supprimer mon compte</button></section></div>';
+}
+
+var VIEWS={overview:vOverview,tenants:vTenants,roles:vRoles,home:vHome,card:vCard,scan:vScan,customers:vCustomers,notifs:vNotifs,wheel:vWheel,team:vTeam,billing:vBilling,mycards:vMyCards,inbox:vInbox,account:vAccount};
+
+/* =========================================================
+   12. Rendu
+   ========================================================= */
+function render(){
+  var app=$("app");
+  if(!me()){app.innerHTML=UI.authMode==="join"?viewJoin():viewAuth();bindTilt(app);return;}
+  app.innerHTML=viewShell();
+  if(UI.tab==="card")renderPreview();
+  if(UI.tab==="wheel")drawWheel($("wheel-prev"),myTenant().wheel.segments,prevRot.v);
+  bindTilt(app);
+}
+function renderPreview(){var b=$("card-preview");if(!b)return;var t=myTenant();b.innerHTML=cardHTML(t,Math.max(0,t.card.goal-3),"Exemple client",Math.min(360,Math.max(240,b.clientWidth-20)),"preview");bindTilt(b);}
+
+function modal(html){$("modal").innerHTML='<div class="modal" role="dialog" aria-modal="true"><div class="sheet">'+html+'</div></div>';var f=$("modal").querySelector("button,input");if(f)f.focus();}
+function closeModal(){$("modal").innerHTML="";}
+var TAB_DESC={card:"Couleurs, récompense, QR du comptoir, alerte de proximité",wheel:"Lots, chances et règles du jeu",team:"Accès vendeurs pour scanner",billing:"Boutiques, prix et factures",roles:"Qui peut faire quoi"};
+function moreSheet(){
+  var nav=NAV[me().role],P={merchant:["home","customers","scan","notifs"]}[me().role]||[];
+  modal('<div class="sheet-grab" aria-hidden="true"></div><h2 style="font-size:22px">Plus</h2><div class="sheet-list">'+nav.filter(function(n){return P.indexOf(n[0])<0;}).map(function(n){return '<button type="button" class="sheet-item" data-tab="'+n[0]+'"'+(UI.tab===n[0]?' aria-current="page"':'')+'><span class="si-ico">'+n[2]+'</span><span><b>'+n[1]+'</b><small>'+(TAB_DESC[n[0]]||"")+'</small></span></button>';}).join("")+'</div><button type="button" class="btn btn-soft btn-block" data-close-sheet>Fermer</button>');
+}
+function viewSheet(){
+  var u=me(),opts=[["admin@combak.fr","Super admin","Toi : MRR, commerçants, accès","superadmin"],["contact@cafelumiere.fr","Commerçant","Café Lumière : tableau de bord","merchant"],["equipe@cafelumiere.fr","Vendeur","Café Lumière : scanner seul","staff"],["lea@exemple.fr","Cliente","Léa : ses cartes et messages","customer"]];
+  modal('<div class="sheet-grab" aria-hidden="true"></div><h2 style="font-size:22px">Changer de vue</h2><p class="small muted" style="margin:-8px 0 0">Démo : passe d\'un compte à l\'autre pour voir chaque espace.</p><div class="sheet-list">'+opts.map(function(o){return '<button type="button" class="sheet-item" data-demo="'+o[0]+'"'+(u.email===o[0]?' aria-current="page"':'')+'><span class="role '+o[3]+'" style="min-width:96px;text-align:center">'+o[1]+'</span><span><small style="margin:0">'+o[2]+'</small></span></button>';}).join("")+
+    '<button type="button" class="sheet-item" data-join="t1"><span class="si-ico">'+I.scan+'</span><span><b>Nouveau client</b><small>Le parcours du QR jusqu\'au Wallet</small></span></button></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button type="button" class="btn btn-soft" data-logout>'+I.out+'Accueil</button><button type="button" class="btn btn-dark" data-close-sheet>Fermer</button></div>');
+}
+
+/* =========================================================
+   13. Événements
+   ========================================================= */
+function login(u){closeModal();DB.session=u.id;UI.tab=null;UI.authError="";save();render();window.scrollTo(0,0);
+  if(u.role==="customer"){var ids=myCustomerCards().map(function(c){return c.id;});var n=DB.notifs.filter(function(x){return ids.indexOf(x.cardId)>-1&&x.t==="À l'instant";})[0];if(n){var c=DB.cards.filter(function(k){return k.id===n.cardId;})[0];setTimeout(function(){showBanner(tenant(c.tenantId).name,n.title,n.body);},500);}}
+}
+document.addEventListener("submit",function(e){
+  var f=e.target;e.preventDefault();
+  if(f.id==="login-form"){var em=$("li-email").value.trim().toLowerCase(),pw=$("li-pw").value;var u=DB.users.filter(function(x){return x.email===em;})[0];
+    if(!u||u.pw!==pw||u.role==="customer"&&false){UI.authError="E-mail ou mot de passe incorrect.";render();$("li-email").focus();return;}login(u);}
+  else if(f.id==="signup-form"){
+    var s={shop:$("su-shop").value.trim(),type:$("su-type").value,address:$("su-address").value.trim(),name:$("su-name").value.trim(),email:$("su-email").value.trim().toLowerCase()},pw2=$("su-pw").value;UI.signup=s;
+    if(!s.shop||!s.name||!s.email){UI.authError="Remplis le nom du commerce, ton prénom et ton e-mail.";render();return;}
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s.email)){UI.authError="Cet e-mail ne semble pas valide.";render();return;}
+    if(pw2.length<8){UI.authError="Le mot de passe doit faire au moins 8 caractères.";render();return;}
+    if(DB.users.some(function(x){return x.email===s.email;})){UI.authError="Un compte existe déjà avec cet e-mail.";render();return;}
+    var tid=uid("t");DB.tenants.push({id:tid,name:s.shop,type:s.type,address:s.address,shops:1,status:"essai",daysLeft:14,card:{reward:"Une récompense",goal:10,color:"bleu"},geoText:"Vous passez juste à côté !",geoOn:!!s.address,scen:{welcome:true,near:true,miss:true,birthday:true,review:true},wheel:{trigger:"inscription",segments:[{label:"-10 %",w:50},{label:"Un cadeau",w:20},{label:"Retente demain",w:30}]},visits:0,rewards:0,weeks:[0,0,0,0,0,0,0,0]});
+    DB.activity[tid]=[];var nu={id:uid("u"),email:s.email,pw:pw2,role:"merchant",tenantId:tid,name:s.name};DB.users.push(nu);UI.signup={};toast("Compte créé : 14 jours d'essai offerts");login(nu);UI.tab="card";render();}
+  else if(f.id==="magic-form"){var m=$("mg-email").value.trim().toLowerCase();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m)){UI.authError="Indique un e-mail valide.";render();return;}
+    var cu=DB.users.filter(function(x){return x.email===m;})[0];if(cu&&cu.role!=="customer"){UI.authError="Cet e-mail est un compte professionnel : connecte-toi avec ton mot de passe.";render();return;}
+    if(!cu){cu={id:uid("u"),email:m,pw:"",role:"customer",name:m.split("@")[0]};DB.users.push(cu);}login(cu);}
+  else if(f.id==="join-public"){var J=UI.join;J.name=$("jp-name").value.trim();J.contact=$("jp-contact").value.trim();J.consent=$("jp-consent").checked;J.error="";
+    if(!J.name){J.error="Indique ton prénom pour créer ta carte.";render();$("jp-name").focus();return;}
+    if(!J.contact){J.error="Indique ton téléphone ou ton e-mail pour retrouver ta carte si tu changes de téléphone.";render();$("jp-contact").focus();return;}
+    J.step="wallet";render();window.scrollTo(0,0);}
+  else if(f.id==="invite-form"){var nm=$("inv-name").value.trim(),ie=$("inv-email").value.trim().toLowerCase(),er=$("inv-err");
+    if(!nm||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(ie)){er.textContent="Indique un prénom et un e-mail valide.";return;}
+    if(DB.users.some(function(x){return x.email===ie;})){er.textContent="Cet e-mail a déjà un compte.";return;}
+    DB.users.push({id:uid("u"),email:ie,pw:"demo",role:"staff",tenantId:myTenant().id,name:nm});save();toast("Invitation envoyée à "+nm);render();}
+  else if(f.id==="join-form"){var tid2=$("join-shop").value,cons=$("join-consent").checked;var t=tenant(tid2);
+    DB.cards.unshift({id:uid("k"),tenantId:tid2,customerUserId:me().id,name:me().name,stamps:0,visits:0,lastDays:0,consent:cons,ready:false,joined:"nov. 2026"});
+    activity(tid2,me().name+" a rejoint le programme");
+    modal('<h2>Ta carte '+esc(t.name)+' est prête</h2>'+cardHTML(t,0,me().name,300,"new")+'<button type="button" class="wallet-btn" data-close>'+I.wallet+'Ajouter à Apple Wallet</button><button type="button" class="wallet-btn" data-close>'+I.wallet+'Ajouter à Google Wallet</button><p class="small muted" style="margin:0;text-align:center">Boutons de démonstration.</p>');bindTilt($("modal"));
+    var card=DB.cards[0];if(t.scen.welcome)setTimeout(function(){notify(card,"Bienvenue","Bienvenue ! Ta carte "+t.name+" est dans ton Wallet.");save();},900);
+    save();render();}
+});
+document.addEventListener("click",function(e){
+  var t=e.target.closest("button,[data-tab]");if(!t)return;var d=t.dataset;
+  if(d.auth){UI.authMode=d.auth;UI.authError="";render();return;}
+  if(d.join){DB.session=null;UI.authMode="join";UI.join={tid:d.join,step:"form",name:"",contact:"",consent:false,error:"",cardId:null,wallet:null};closeModal();save();render();window.scrollTo(0,0);return;}
+  if(t.hasAttribute("data-join-again")){UI.join={tid:UI.join.tid,step:"form",name:"",contact:"",consent:false,error:"",cardId:null,wallet:null};render();window.scrollTo(0,0);return;}
+  if(d.walletAdd){openWalletSheet(d.walletAdd);return;}
+  if(t.hasAttribute("data-close-sheet")){closeModal();return;}
+  if(d.confirmWallet){var J=UI.join,jt=tenant(J.tid),nc={id:uid("k"),tenantId:J.tid,customerUserId:null,name:J.name,stamps:0,visits:0,lastDays:0,consent:J.consent,ready:false,joined:"nov. 2026",wallet:d.confirmWallet};
+    DB.cards.unshift(nc);activity(J.tid,J.name+" a ajouté sa carte à "+WALLET_NAME[d.confirmWallet]);J.cardId=nc.id;J.wallet=d.confirmWallet;J.step="done";closeModal();save();render();window.scrollTo(0,0);
+    if(jt.scen.welcome&&nc.consent){DB.notifs.unshift({id:uid("n"),cardId:nc.id,title:"Bienvenue",body:"Bienvenue "+J.name+" ! Ta carte "+jt.name+" est dans ton Wallet.",t:"À l'instant"});save();setTimeout(function(){showBanner(jt.name,"Bienvenue","Bienvenue "+J.name+" ! Ta carte "+jt.name+" est dans ton Wallet.");},700);}
+    return;}
+  if(d.demo){var u=DB.users.filter(function(x){return x.email===d.demo;})[0];if(u)login(u);return;}
+  if(t.hasAttribute("data-logout")){closeModal();DB.session=null;UI.authMode="pick";save();render();window.scrollTo(0,0);return;}
+  if(d.tab){closeModal();UI.tab=d.tab;render();window.scrollTo(0,0);return;}
+  if(t.hasAttribute("data-more")){moreSheet();return;}
+  if(t.hasAttribute("data-viewsheet")){viewSheet();return;}
+  if(d.stamp){var c=DB.cards.filter(function(x){return x.id===d.stamp;})[0];if(c&&can("tenant.scan")&&c.tenantId===me().tenantId)addStamp(c);return;}
+  if(d.redeem){var r=DB.cards.filter(function(x){return x.id===d.redeem;})[0];if(r&&can("tenant.scan")&&r.tenantId===me().tenantId)redeem(r);return;}
+  if(d.tstatus&&can("platform.view")){var tn=tenant(d.tstatus);tn.status=d.to;save();toast(tn.name+(d.to==="suspendu"?" suspendu":" réactivé"));render();return;}
+  if(d.shopsStep&&can("tenant.billing")){var ms=myTenant();ms.shops=Math.max(1,Math.min(50,ms.shops+(+d.shopsStep)));save();render();return;}
+  if(t.hasAttribute("data-activate")&&can("tenant.billing")){var ma=myTenant();ma.status="actif";ma.daysLeft=0;save();toast("Abonnement activé : "+priceTxt(ma)+" HT par mois");render();return;}
+  if(d.staffDel&&can("tenant.team")){DB.users=DB.users.filter(function(x){return !(x.id===d.staffDel&&x.tenantId===me().tenantId&&x.role==="staff");});save();toast("Accès retiré");render();return;}
+  if(d.segDel!==undefined&&can("tenant.settings")){myTenant().wheel.segments.splice(+d.segDel,1);save();render();return;}
+  if(t.id==="seg-add"&&can("tenant.settings")){myTenant().wheel.segments.push({label:"Nouveau lot",w:10});save();render();return;}
+  if(t.id==="wheel-test"){t.disabled=true;spin($("wheel-prev"),myTenant().wheel.segments,prevRot,function(i){$("wheel-out").textContent="Résultat du test : "+myTenant().wheel.segments[i].label;t.disabled=false;});return;}
+  if(t.id==="n-send"&&can("tenant.campaigns")){var mt2=myTenant(),msg=$("n-msg").value.trim(),tg=$("n-target").value;if(!msg){toast("Écris un message avant d'envoyer");return;}
+    var targets=tenantCards(mt2.id).filter(function(c){if(!c.consent)return false;if(tg==="near")return mt2.card.goal-c.stamps<=2;if(tg==="miss")return c.lastDays>30;return true;});
+    targets.forEach(function(c){notify(c,"Nouveau message",msg);});DB.campaigns.unshift({tenantId:mt2.id,msg:msg,n:targets.length});activity(mt2.id,"Campagne envoyée à "+targets.length+" clients");save();toast("Envoyé à "+targets.length+" client"+(targets.length>1?"s":""));render();return;}
+  if(t.id==="join-open"){var mine=myCustomerCards().map(function(c){return c.tenantId;}),avail=DB.tenants.filter(function(x){return mine.indexOf(x.id)<0&&x.status!=="suspendu";});
+    if(!avail.length){toast("Tu as déjà rejoint tous les commerces de la démo");return;}
+    modal('<h2>Rejoindre un commerce</h2><p class="muted" style="margin:0">Dans la vraie vie, tu scannes le QR du comptoir. Ici, choisis le commerce.</p><form id="join-form" novalidate style="display:flex;flex-direction:column;gap:12px"><div class="field"><label for="join-shop">Commerce</label><select class="input" id="join-shop">'+avail.map(function(x){return '<option value="'+x.id+'">'+esc(x.name)+'</option>';}).join("")+'</select></div><label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;cursor:pointer"><input type="checkbox" id="join-consent" style="width:20px;height:20px;accent-color:#2F5BFF;flex:none"><span>J\'accepte de recevoir les offres de ce commerce sur ma carte. Désinscription en un geste.</span></label><button type="submit" class="btn btn-primary">Créer ma carte</button><button type="button" class="btn btn-soft" data-close>Annuler</button></form>');return;}
+  if(t.hasAttribute("data-close")){closeModal();render();return;}
+  if(d.spin){var sc=DB.cards.filter(function(x){return x.id===d.spin;})[0],st=tenant(sc.tenantId),rot={v:0};
+    modal('<h2>Tourne la roue</h2><div class="wheel-wrap"><canvas id="wheel-c" aria-label="Roue des cadeaux de '+esc(st.name)+'"></canvas><span class="wheel-pin" aria-hidden="true"></span></div><p id="wheel-res" role="status" style="margin:0;text-align:center;font-weight:700;min-height:1.5em"></p><button type="button" class="btn btn-primary" id="wheel-go">Lancer</button><button type="button" class="btn btn-soft" data-close>Fermer</button>');
+    drawWheel($("wheel-c"),st.wheel.segments,0);
+    $("wheel-go").onclick=function(){var b=this;b.disabled=true;spin($("wheel-c"),st.wheel.segments,rot,function(i){var lot=st.wheel.segments[i].label,lose=/retente|perdu/i.test(lot);DB.spun[sc.id]=lose?"-":lot;activity(st.id,sc.name+(lose?" a tourné la roue":" a gagné : "+lot));save();$("wheel-res").textContent=lose?"Pas cette fois. Retente à ta prochaine visite !":"Bravo ! Tu gagnes : "+lot;});};return;}
+  if(d.geo){var gc=DB.cards.filter(function(x){return x.id===d.geo;})[0],gt=tenant(gc.tenantId);showBanner(gt.name,"À proximité",gt.geoText);toast("Démo : c'est ce que voit ton client sur iPhone en passant devant");return;}
+  if(t.id==="export"){var data={compte:{email:me().email,prenom:me().name},cartes:myCustomerCards().map(function(c){return {commerce:tenant(c.tenantId).name,tampons:c.stamps,passages:c.visits,notifications:c.consent};})};
+    var txt=JSON.stringify(data,null,2);if(navigator.clipboard){navigator.clipboard.writeText(txt).then(function(){toast("Tes données sont copiées");},function(){toast("Copie impossible ici");});}else toast("Copie impossible ici");return;}
+  if(t.id==="delete-acc"){modal('<h2>Supprimer ton compte ?</h2><p style="margin:0">Tes '+myCustomerCards().length+' cartes et tes messages seront effacés. Les commerces ne pourront plus te contacter. C\'est définitif.</p><button type="button" class="btn btn-danger" id="delete-yes">Oui, tout supprimer</button><button type="button" class="btn btn-soft" data-close>Annuler</button>');return;}
+  if(t.id==="delete-yes"){var uid0=me().id,ids=myCustomerCards().map(function(c){return c.id;});DB.cards=DB.cards.filter(function(c){return c.customerUserId!==uid0;});DB.notifs=DB.notifs.filter(function(n){return ids.indexOf(n.cardId)<0;});DB.users=DB.users.filter(function(u){return u.id!==uid0;});DB.session=null;save();closeModal();toast("Compte supprimé");render();return;}
+});
+document.addEventListener("input",function(e){
+  var t=e.target,mt=me()&&myTenant();
+  if(mt&&can("tenant.settings")){
+    if(t.id==="c-name"){mt.name=t.value||"Mon commerce";save();renderPreview();return;}
+    if(t.id==="c-reward"){mt.card.reward=t.value||"Une récompense";save();renderPreview();return;}
+    if(t.id==="c-goal"){mt.card.goal=+t.value;$("goal-out").textContent=t.value;tenantCards(mt.id).forEach(function(c){if(c.stamps>=mt.card.goal){c.stamps=mt.card.goal;c.ready=true;}else c.ready=false;});save();renderPreview();return;}
+    if(t.id==="c-address"){mt.address=t.value;save();return;}
+    if(t.id==="c-geotext"){mt.geoText=t.value;save();return;}
+    if(t.dataset.segL!==undefined){mt.wheel.segments[+t.dataset.segL].label=t.value;save();drawWheel($("wheel-prev"),mt.wheel.segments,prevRot.v);return;}
+    if(t.dataset.segW!==undefined){mt.wheel.segments[+t.dataset.segW].w=Math.max(0,Math.min(100,+t.value||0));var tot=mt.wheel.segments.reduce(function(s,x){return s+x.w;},0)||1;mt.wheel.segments.forEach(function(s,i){var p=$("sp-"+i);if(p)p.textContent=Math.round(s.w/tot*100)+"%";});save();return;}
+  }
+  if(t.id==="jp-name"){UI.join.name=t.value;return;}
+  if(t.id==="jp-contact"){UI.join.contact=t.value;return;}
+  if(t.id==="scan-search"){UI.scanFilter=t.value;$("scan-list").innerHTML=scanRows(myTenant());return;}
+  if(t.id==="client-search"){UI.clientFilter=t.value;$("client-body").innerHTML=custRows(myTenant());return;}
+});
+document.addEventListener("change",function(e){
+  var t=e.target,mt=me()&&myTenant();
+  if(t.id==="switch"&&t.value){var u=DB.users.filter(function(x){return x.id===t.value;})[0];if(u){login(u);toast("Connecté en tant que "+ROLE_LABEL[u.role]+" · "+(u.tenantId?tenant(u.tenantId).name:u.name));}return;}
+  if(t.name==="card-color"&&can("tenant.settings")){mt.card.color=t.value;save();render();return;}
+  if(t.id==="c-geo"&&can("tenant.settings")){mt.geoOn=t.checked;save();return;}
+  if(t.name==="w-trig"&&can("tenant.settings")){mt.wheel.trigger=t.value;save();return;}
+  if(t.dataset.scen&&can("tenant.campaigns")){mt.scen[t.dataset.scen]=t.checked;save();toast((t.checked?"Activé : ":"Désactivé : ")+t.getAttribute("aria-label"));return;}
+  if(t.dataset.shops&&can("platform.view")){tenant(t.dataset.shops).shops=Math.max(1,Math.min(50,+t.value||1));save();toast("Nombre de boutiques modifié");render();return;}
+  if(t.id==="b-shops"&&can("tenant.billing")){myTenant().shops=Math.max(1,Math.min(50,+t.value||1));save();render();return;}
+  if(t.dataset.consent&&can("customer.cards")){var c=DB.cards.filter(function(x){return x.id===t.dataset.consent&&x.customerUserId===me().id;})[0];if(c){c.consent=t.checked;save();toast(t.checked?"Notifications activées":"Notifications coupées");}return;}
+});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&$("modal").innerHTML){closeModal();render();}});
+window.addEventListener("resize",function(){if(UI.tab==="card")renderPreview();if(UI.tab==="wheel"&&$("wheel-prev"))drawWheel($("wheel-prev"),myTenant().wheel.segments,prevRot.v);});
+
+render();
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){if(UI.tab==="wheel"&&$("wheel-prev"))drawWheel($("wheel-prev"),myTenant().wheel.segments,prevRot.v);});
+})();
+</script>
+</body>
+</html>
